@@ -4,6 +4,8 @@ import { Channels, type AppInfo, type Settings } from '../shared/ipc'
 import { isAppUrl } from './security'
 import { loadSettings, saveSettings } from './settings'
 import { chooseWorkspace, currentWorkspace, openWorkspace } from './workspace'
+import { detect, openSignIn } from './engine/claude-code'
+import { answerPermission, cancelRun, continueRun, startRun } from './runs'
 
 /** Only the app's own screens may call in; anything else is refused. */
 function handle<T>(channel: string, fn: (event: IpcMainInvokeEvent, ...args: unknown[]) => T): void {
@@ -40,4 +42,11 @@ export function registerIpc(): void {
   handle(Channels.workspaceGet, () => currentWorkspace())
   handle(Channels.workspaceChoose, (event) => chooseWorkspace(BrowserWindow.fromWebContents(event.sender)))
   handle(Channels.workspaceOpen, () => openWorkspace())
+
+  handle(Channels.engineDetect, () => detect())
+  handle(Channels.engineSignIn, () => openSignIn())
+  handle(Channels.runStart, (event, request) => startRun(event.sender, request))
+  handle(Channels.runContinue, (event, request) => continueRun(event.sender, request))
+  handle(Channels.runAnswer, (_event, answer) => answerPermission(answer))
+  handle(Channels.runCancel, () => cancelRun())
 }

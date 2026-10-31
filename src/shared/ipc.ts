@@ -1,6 +1,8 @@
 // The only bridge between the screens (renderer) and the main process.
 // Everything the screens can ask for is listed here; nothing else is exposed.
 
+import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
+
 export const THEME_CHOICES = ['system', 'midnight', 'light-relax'] as const
 export type ThemeChoice = (typeof THEME_CHOICES)[number]
 
@@ -35,8 +37,18 @@ export const Channels = {
   settingsSet: 'settings:set',
   workspaceGet: 'workspace:get',
   workspaceChoose: 'workspace:choose',
-  workspaceOpen: 'workspace:open'
+  workspaceOpen: 'workspace:open',
+  engineDetect: 'engine:detect',
+  engineSignIn: 'engine:signIn',
+  runStart: 'run:start',
+  runContinue: 'run:continue',
+  runAnswer: 'run:answer',
+  runCancel: 'run:cancel',
+  /** Main -> screens: progress of the current run. */
+  runEvent: 'run:event'
 } as const
+
+export type RunStartResult = { ok: true; runId: string } | { ok: false; reason: 'busy' | 'noWorkspace' | 'badInput' }
 
 export interface ShortlistApi {
   appInfo(): Promise<AppInfo>
@@ -51,6 +63,16 @@ export interface ShortlistApi {
   chooseWorkspace(): Promise<WorkspaceStatus | null>
   /** Shows the saved folder in Explorer / Finder. */
   openWorkspace(): Promise<void>
+  /** Is "Your Claude Code" installed, recent enough and signed in? */
+  detectEngine(): Promise<EngineStatus>
+  /** Opens Claude Code's own sign-in in a terminal window. */
+  signInEngine(): Promise<boolean>
+  startRun(request: StartRun): Promise<RunStartResult>
+  continueRun(request: ContinueRun): Promise<RunStartResult>
+  answerPermission(requestId: string, allow: boolean): Promise<boolean>
+  cancelRun(): Promise<void>
+  /** Subscribe to run progress; returns an unsubscribe function. */
+  onRunEvent(listener: (event: RunEvent) => void): () => void
 }
 
 /** Keeps only known keys with valid values; anything else is dropped. */

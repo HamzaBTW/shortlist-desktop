@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AppInfo, Settings as SettingsData, ThemeChoice, WorkspaceStatus } from '../../../shared/ipc'
+import type { EngineStatus } from '../../../shared/engine'
+import { EnginePanel } from '../components/EnginePanel'
 import { WorkspacePanel } from '../components/WorkspacePanel'
 
 const THEMES: { id: ThemeChoice; key: string }[] = [
@@ -14,9 +16,11 @@ interface SettingsProps {
   onChange: (patch: Partial<SettingsData>) => void
   workspace: WorkspaceStatus | null
   onWorkspace: (status: WorkspaceStatus) => void
+  engine: EngineStatus | null
+  onRecheckEngine: () => void
 }
 
-export function Settings({ settings, onChange, workspace, onWorkspace }: SettingsProps) {
+export function Settings({ settings, onChange, workspace, onWorkspace, engine, onRecheckEngine }: SettingsProps) {
   const { t } = useTranslation()
   const [info, setInfo] = useState<AppInfo | null>(null)
 
@@ -31,6 +35,8 @@ export function Settings({ settings, onChange, workspace, onWorkspace }: Setting
       </header>
 
       <WorkspacePanel workspace={workspace} onChosen={onWorkspace} />
+
+      <EnginePanel status={engine} onRecheck={onRecheckEngine} />
 
       <section className="sl-tile panel">
         <h2 className="sl-t-title">{t('settings.appearance')}</h2>
@@ -51,10 +57,6 @@ export function Settings({ settings, onChange, workspace, onWorkspace }: Setting
         </fieldset>
       </section>
 
-      <section className="sl-tile panel">
-        <h2 className="sl-t-title">{t('settings.engine')}</h2>
-        <p className="sl-t-sm">{t('settings.comingNext')}</p>
-      </section>
 
       <section className="sl-tile panel">
         <h2 className="sl-t-title">{t('settings.about')}</h2>

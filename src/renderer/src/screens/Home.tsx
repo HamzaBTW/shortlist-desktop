@@ -14,10 +14,11 @@ const COLUMNS = [
 
 interface HomeProps {
   workspace: WorkspaceStatus | null
+  engineReady: boolean
   onNavigate: (route: Route) => void
 }
 
-export function Home({ workspace, onNavigate }: HomeProps) {
+export function Home({ workspace, engineReady, onNavigate }: HomeProps) {
   const { t } = useTranslation()
 
   return (
@@ -33,12 +34,16 @@ export function Home({ workspace, onNavigate }: HomeProps) {
           </button>
         </div>
       </header>
-      <p className="sl-t-sm">
-        {t(workspace?.ok ? 'home.needEngine' : 'home.needFolder')}{' '}
-        <button type="button" className="sl-link" onClick={() => onNavigate('settings')}>
-          {t('home.openSettings')}
-        </button>
-      </p>
+      {workspace?.ok && engineReady ? (
+        <p className="sl-t-sm">{t('home.ready')}</p>
+      ) : (
+        <p className="sl-t-sm">
+          {t(workspace?.ok ? 'home.needEngine' : 'home.needFolder')}{' '}
+          <button type="button" className="sl-link" onClick={() => onNavigate('settings')}>
+            {t('home.openSettings')}
+          </button>
+        </p>
+      )}
 
       <div className="board">
         {COLUMNS.map((col) => (

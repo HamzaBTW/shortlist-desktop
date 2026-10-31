@@ -22,7 +22,8 @@
     "emptyColumn": "Nothing here yet",
     "needFolder": "Start by choosing your ai-job-search folder.",
     "needEngine": "Your folder is ready. Next, connect your AI engine.",
-    "openSettings": "Go to Settings"
+    "openSettings": "Go to Settings",
+    "ready": "Your folder and AI engine are ready."
   },
   "stage": {
     "shortlisted": "Shortlisted",
@@ -38,8 +39,6 @@
     "themeSystem": "Follow system",
     "themeMidnight": "Midnight",
     "themeLight": "Light-relax",
-    "engine": "AI engine",
-    "comingNext": "Coming in the next step.",
     "about": "About",
     "version": "{{name}} version {{version}}"
   },
@@ -65,6 +64,39 @@
       "noProfile": "Your profile isn't filled in yet",
       "tracker": "Application tracker found",
       "noTracker": "No applications tracked yet"
+    }
+  },
+  "engine": {
+    "title": "AI engine",
+    "recommended": "Recommended",
+    "comingNext": "Coming next",
+    "comingSoon": "Coming soon",
+    "signIn": "Sign in",
+    "checkAgain": "Check again",
+    "cc": {
+      "name": "Your Claude Code",
+      "privacy": "Uses the Claude Code already signed in on this computer. Your files are sent only as a task needs them, under your own Claude plan."
+    },
+    "key": {
+      "name": "Anthropic API key",
+      "privacy": "Stored encrypted on this computer. Tasks are billed to this key."
+    },
+    "codex": {
+      "name": "Codex",
+      "privacy": "Not available yet."
+    },
+    "state": {
+      "checking": "Checking…",
+      "ready": "Ready · version {{version}}",
+      "signedOut": "Installed, but not signed in",
+      "outdated": "Version {{version}} is too old. {{min}} or newer is needed.",
+      "notFound": "Claude Code isn't installed on this computer",
+      "error": "Claude Code didn't answer. Try Check again."
+    },
+    "help": {
+      "signedOut": "Sign in opens Claude Code's own sign-in in a terminal window. When it says you're signed in, come back and press Check again.",
+      "notFound": "Install Claude Code from Anthropic's website, sign in once, then press Check again.",
+      "outdated": "Update Claude Code (run \"claude update\" in a terminal), then press Check again. Older versions trust compromised security certificates."
     }
   }
 }

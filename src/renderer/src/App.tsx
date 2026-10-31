@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import type { EngineStatus } from '../../shared/engine'
 import { DEFAULT_SETTINGS, type Settings as SettingsData, type WorkspaceStatus } from '../../shared/ipc'
 import { Sidebar, type Route } from './components/Sidebar'
 import { Home } from './screens/Home'
@@ -12,11 +13,21 @@ export function App() {
   const [settings, setSettings] = useState<SettingsData>(DEFAULT_SETTINGS)
 
   const [workspace, setWorkspace] = useState<WorkspaceStatus | null>(null)
+  const [engine, setEngine] = useState<EngineStatus | null>(null)
+
+  const recheckEngine = useCallback(() => {
+    setEngine((e) => (e ? { ...e, state: 'checking' } : e))
+    void window.shortlist.detectEngine().then(setEngine)
+  }, [])
 
   useEffect(() => {
     void window.shortlist.getSettings().then(setSettings)
     void window.shortlist.getWorkspace().then(setWorkspace)
-  }, [])
+    recheckEngine()
+    // Coming back from the sign-in terminal: check again.
+    window.addEventListener('focus', recheckEngine)
+    return () => window.removeEventListener('focus', recheckEngine)
+  }, [recheckEngine])
 
   useTheme(settings.theme)
 
@@ -28,11 +39,18 @@ export function App() {
   let screen: ReactElement
   switch (route) {
     case 'home':
-      screen = <Home workspace={workspace} onNavigate={setRoute} />
+      screen = <Home workspace={workspace} engineReady={engine?.state === 'ready'} onNavigate={setRoute} />
       break
     case 'settings':
       screen = (
-        <Settings settings={settings} onChange={update} workspace={workspace} onWorkspace={setWorkspace} />
+        <Settings
+          settings={settings}
+          onChange={update}
+          workspace={workspace}
+          onWorkspace={setWorkspace}
+          engine={engine}
+          onRecheckEngine={recheckEngine}
+        />
       )
       break
     default:
