@@ -1,0 +1,135 @@
+/* Generated from design/tokens.json by scripts/build-tokens.mjs. Do not edit. */
+
+:root, [data-theme="midnight"] {
+  color-scheme: dark;
+  --bg: #0f0e0d;
+  --surface: #181614;
+  --surface-raised: #211e1b;
+  --surface-sunken: #0a0908;
+  --line: #2c2824;
+  --line-strong: #7a7066;
+  --ink: #f3eee7;
+  --ink-muted: #b1a89d;
+  --accent: #5fd0da;
+  --accent-soft: #123237;
+  --on-accent: #062229;
+  --success: #62d494;
+  --success-soft: #12301f;
+  --warning: #f2bb55;
+  --warning-soft: #33270d;
+  --danger: #ff8a7a;
+  --danger-soft: #3a1713;
+  --focus-ring: var(--accent);
+  --stage-shortlisted: var(--ink-muted);
+  --stage-applied: var(--accent);
+  --stage-interviewing: var(--warning);
+  --stage-offer: var(--success);
+  --stage-rejected: var(--ink-muted);
+  --shadow-card: inset 0 1px 0 0 #ffffff0f, 0 12px 28px 0 #00000066;
+  --shadow-pop: 0 18px 48px 0 #000000b3;
+}
+
+[data-theme="light-relax"] {
+  color-scheme: light;
+  --bg: #f5efe6;
+  --surface: #fcf8f2;
+  --surface-raised: #ffffff;
+  --surface-sunken: #ece4d8;
+  --line: #e0d6c8;
+  --line-strong: #8a7d6e;
+  --ink: #2b2219;
+  --ink-muted: #5f5448;
+  --accent: #0b6672;
+  --accent-soft: #d6eef0;
+  --on-accent: #ffffff;
+  --success: #17703f;
+  --success-soft: #dcf1e3;
+  --warning: #855200;
+  --warning-soft: #f8ebcc;
+  --danger: #ab3022;
+  --danger-soft: #fadfda;
+  --focus-ring: var(--accent);
+  --stage-shortlisted: var(--ink-muted);
+  --stage-applied: var(--accent);
+  --stage-interviewing: var(--warning);
+  --stage-offer: var(--success);
+  --stage-rejected: var(--ink-muted);
+  --shadow-card: 0 1px 2px 0 #4a3a2814, 0 8px 20px 0 #4a3a2814;
+  --shadow-pop: 0 18px 40px 0 #4a3a2833;
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+.t-display-xl {
+  font-family: var(--font-sans);
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.t-display-lg {
+  font-family: var(--font-sans);
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.t-title {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+}
+
+.t-body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 400;
+}
+
+.t-body-sm {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 400;
+}
+
+.t-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.t-num-xl {
+  font-family: var(--font-mono);
+  font-size: 36px;
+  line-height: 40px;
+  font-weight: 600;
+}
+
+.t-num-md {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 600;
+}

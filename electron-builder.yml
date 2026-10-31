@@ -1,0 +1,36 @@
+appId: io.github.shortlist.desktop
+directories:
+  buildResources: build
+  output: dist
+files:
+  - out/**
+  - package.json
+  - LICENSE
+asar: true
+
+# Turn off Electron features this app never uses, so they can't be abused.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+
+win:
+  target: nsis
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+
+mac:
+  target: dmg
+  category: public.app-category.productivity
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Office

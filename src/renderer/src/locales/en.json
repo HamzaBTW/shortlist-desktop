@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "label": "Main",
+    "home": "Home",
+    "search": "Search & rank",
+    "profile": "Profile",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "tray": {
+    "label": "Jobs",
+    "empty": "No jobs running"
+  },
+  "guide": {
+    "label": "Guide me",
+    "hint": "Short explanations next to things"
+  },
+  "home": {
+    "title": "Pipeline",
+    "findJobs": "Find new jobs",
+    "addJob": "Add a job",
+    "notReady": "Choose your folder and AI engine in Settings to get started.",
+    "emptyColumn": "Nothing here yet"
+  },
+  "stage": {
+    "shortlisted": "Shortlisted",
+    "applied": "Applied",
+    "interviewing": "Interviewing",
+    "offer": "Offer",
+    "closed": "Closed"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeSystem": "Follow system",
+    "themeMidnight": "Midnight",
+    "themeLight": "Light-relax",
+    "workspace": "Your folder",
+    "engine": "AI engine",
+    "comingNext": "Coming in the next step.",
+    "about": "About",
+    "version": "{{name}} version {{version}}"
+  },
+  "placeholder": {
+    "body": "This screen comes later."
+  }
+}

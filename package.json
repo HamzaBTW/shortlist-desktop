@@ -1,0 +1,37 @@
+{
+  "name": "shortlist",
+  "productName": "Shortlist",
+  "version": "0.1.0",
+  "description": "A calm desktop control room for the open-source ai-job-search workflow.",
+  "license": "MIT",
+  "private": true,
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "npm run tokens && npm run typecheck && electron-vite build",
+    "preview": "electron-vite preview",
+    "tokens": "node scripts/build-tokens.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "node --test \"tests/**/*.test.mts\"",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:linux": "npm run build && electron-builder --linux"
+  },
+  "dependencies": {
+    "i18next": "26.4.7",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-i18next": "17.0.20"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "electron": "44.9.3",
+    "electron-builder": "26.17.0",
+    "electron-vite": "6.0.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.4"
+  }
+}
