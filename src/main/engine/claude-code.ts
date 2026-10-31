@@ -134,8 +134,11 @@ export class ClaudeCodeRun {
 
   constructor(
     private readonly workspace: string,
-    /** true: Claude Code's "accept edits" mode (file changes inside the folder go ahead). */
-    private readonly acceptEdits: boolean,
+    /**
+     * acceptEdits: Claude Code's "accept edits" mode (file changes inside the folder go ahead).
+     * allowWeb: web pages and searches go ahead without a card.
+     */
+    private readonly options: { acceptEdits: boolean; allowWeb: boolean },
     private readonly emit: Emit
   ) {}
 
@@ -158,7 +161,7 @@ export class ClaudeCodeRun {
       '--permission-prompt-tool=stdio',
       // Never bypassPermissions. acceptEdits only covers file changes inside this folder;
       // the folder's own "ask" rules still ask, and anything outside comes to judge().
-      '--permission-mode', this.acceptEdits ? 'acceptEdits' : 'default',
+      '--permission-mode', this.options.acceptEdits ? 'acceptEdits' : 'default',
       // Only the workspace's own settings, never the person's global ones.
       '--setting-sources', 'project'
     ]
@@ -296,8 +299,13 @@ export class ClaudeCodeRun {
       return
     }
 
-    const verdict = judge(tool, input, this.workspace)
+    const verdict = judge(tool, input, this.workspace, { allowWeb: this.options.allowWeb })
     const { detail, kind } = describe(tool, input, this.workspace)
+
+    if (verdict.decision === 'allow') {
+      this.respond(requestId, { behavior: 'allow', updatedInput: input })
+      return
+    }
 
     if (verdict.decision === 'deny') {
       this.respond(requestId, { behavior: 'deny', message: `The ${APP_NAME} app never allows this (${verdict.reason}).` })

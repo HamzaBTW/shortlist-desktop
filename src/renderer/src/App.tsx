@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { EngineStatus } from '../../shared/engine'
 import { DEFAULT_SETTINGS, type RunStartResult, type Settings as SettingsData, type WorkspaceStatus } from '../../shared/ipc'
+import type { Pick, RankedJob, SearchData } from '../../shared/search'
 import type { TrackerData, TrackerRow } from '../../shared/tracker'
 import { AddJobDialog } from './components/AddJobDialog'
 import { StatusDialog, type StatusTarget } from './components/StatusDialog'
@@ -13,6 +14,7 @@ import { Home } from './screens/Home'
 import { JobDetail } from './screens/JobDetail'
 import { Placeholder } from './screens/Placeholder'
 import { RowDetail } from './screens/RowDetail'
+import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
 import { useTheme } from './useTheme'
 
@@ -28,6 +30,10 @@ export function App() {
   const [tracker, setTracker] = useState<TrackerData | null>(null)
   const [adding, setAdding] = useState(false)
   const [updating, setUpdating] = useState<StatusTarget | null>(null)
+  const [search, setSearch] = useState<SearchData | null>(null)
+  const [picks, setPicks] = useState<Record<string, Pick>>({})
+  // Find new jobs: /scrape runs first; when it finishes, /rank starts for the same job.
+  const scrapeRuns = useRef(new Map<string, string>())
 
   // Tracker rows as they were when each run started, and which job each run belongs to.
   const before = useRef(new Map<string, { jobId: string; rows: TrackerRow[] }>())
@@ -47,6 +53,10 @@ export function App() {
     return data
   }, [])
 
+  const reloadSearch = useCallback(async (): Promise<void> => {
+    setSearch(await window.shortlist.readSearch())
+  }, [])
+
   // Settings, engine and run events: once.
   useEffect(() => {
     void window.shortlist.getSettings().then(setSettings)
@@ -55,11 +65,21 @@ export function App() {
     const onFocus = (): void => {
       recheckEngine()
       void reloadTracker()
+      void reloadSearch()
     }
     window.addEventListener('focus', onFocus)
     const off = window.shortlist.onRunEvent((event) => {
       setJobs((all) => all.map((j) => applyEvent(j, event)))
       if (event.type !== 'finished' && event.type !== 'failed') return
+      void reloadSearch()
+      const searchJob = scrapeRuns.current.get(event.runId)
+      scrapeRuns.current.delete(event.runId)
+      if (searchJob && event.type === 'finished' && !event.isError) {
+        // The search found what it could; rank it now.
+        void window.shortlist.startRun({ command: 'rank', input: '' }).then((r) => {
+          if (r.ok) setJobs((all) => all.map((j) => (j.id === searchJob ? { ...continued(j, r.runId), stage: 'rank' } : j)))
+        })
+      }
       const start = before.current.get(event.runId)
       before.current.delete(event.runId)
       void reloadTracker().then((data) => {
@@ -72,7 +92,7 @@ export function App() {
       window.removeEventListener('focus', onFocus)
       off()
     }
-  }, [recheckEngine, reloadTracker])
+  }, [recheckEngine, reloadTracker, reloadSearch])
 
   // Saved jobs and the tracker: whenever the folder changes.
   const wsPath = workspace?.ok ? workspace.path : null
@@ -81,14 +101,18 @@ export function App() {
     if (!wsPath) {
       setJobs([])
       setTracker(null)
+      setSearch(null)
+      setPicks({})
       return
     }
+    void window.shortlist.listPicks().then(setPicks)
+    void reloadSearch()
     void window.shortlist.listJobs().then((raw) => {
       const restored = raw.map((r) => restore(r, t('job.stoppedOnClose'))).filter((j): j is Job => j !== null)
       setJobs(restored)
     })
     void reloadTracker()
-  }, [wsPath, reloadTracker, t])
+  }, [wsPath, reloadTracker, reloadSearch, t])
 
   // Save jobs that changed.
   useEffect(() => {
@@ -148,6 +172,57 @@ export function App() {
     return null
   }
 
+  const findJobs = async (): Promise<void> => {
+    setView('search')
+    const r = await window.shortlist.startRun({ command: 'scrape', input: '' })
+    if (!r.ok) return
+    const id = crypto.randomUUID()
+    scrapeRuns.current.set(r.runId, id)
+    const job = { ...newJob(id, '/scrape', r.runId, Date.now(), 'search'), stage: 'scrape' as const }
+    job.title = t('search.jobTitle')
+    setJobs((all) => [job, ...all])
+  }
+
+  const rankRest = async (): Promise<void> => {
+    const r = await window.shortlist.startRun({ command: 'rank', input: '' })
+    if (!r.ok) return
+    const id = crypto.randomUUID()
+    const job = { ...newJob(id, '/rank', r.runId, Date.now(), 'search'), stage: 'rank' as const }
+    job.title = t('search.jobTitle')
+    setJobs((all) => [job, ...all])
+  }
+
+  /** "Check my fit" on a ranked job: /apply with its link (and key, for stored Indeed text). */
+  const checkRanked = async (r: RankedJob): Promise<void> => {
+    const input = r.url
+      ? `${r.url} (ranked by /rank; job key: ${r.key})`
+      : `${r.title} at ${r.company} (ranked by /rank; job key: ${r.key})`
+    const rows = (await reloadTracker()).rows
+    const res = await window.shortlist.startRun({ command: 'apply', input })
+    if (!res.ok) return
+    const id = crypto.randomUUID()
+    before.current.set(res.runId, { jobId: id, rows })
+    const job = { ...newJob(id, input, res.runId), rankedKey: r.key }
+    job.title = r.company ? `${r.title} - ${r.company}` : r.title
+    setJobs((all) => [job, ...all])
+    setView({ job: id })
+  }
+
+  const pick = (key: string, value: Pick | null): void => {
+    setPicks((all) => {
+      const next = { ...all }
+      if (value) next[key] = value
+      else delete next[key]
+      return next
+    })
+    void window.shortlist.setPick(key, value)
+  }
+
+  const openJob = (id: string): void => {
+    const job = jobs.find((j) => j.id === id)
+    setView(job?.kind === 'search' ? 'search' : { job: id })
+  }
+
   const notNow = (job: Job): void =>
     setJobs((all) => all.map((j) => (j.id === job.id ? { ...j, phase: 'notNow' } : j)))
 
@@ -190,9 +265,27 @@ export function App() {
         onAddJob={() => setAdding(true)}
         onOpenJob={(id) => setView({ job: id })}
         onOpenRow={(id) => setView({ row: id })}
+        ranked={search?.ranked ?? []}
+        picks={picks}
+        onFindJobs={() => void findJobs()}
+        onCheckRanked={(r) => void checkRanked(r)}
         canUpdate={ready && !running}
         onUpdateStatus={setUpdating}
         onNavigate={setView}
+      />
+    )
+  } else if (view === 'search') {
+    screen = (
+      <Search
+        canRun={ready && !running}
+        search={search}
+        picks={picks}
+        job={jobs.filter((j) => j.kind === 'search').sort((a, b) => b.createdAt - a.createdAt)[0] ?? null}
+        started={new Set(jobs.map((j) => j.rankedKey).filter((k): k is string => Boolean(k)))}
+        onFind={() => void findJobs()}
+        onRankRest={() => void rankRest()}
+        onCheck={(r) => void checkRanked(r)}
+        onPick={pick}
       />
     )
   } else if (view === 'settings') {
@@ -218,7 +311,7 @@ export function App() {
         guide={settings.guide}
         onGuideChange={(guide) => update({ guide })}
         activeJob={jobs.find((j) => j.phase === 'running') ?? null}
-        onOpenJob={(id) => setView({ job: id })}
+        onOpenJob={openJob}
       />
       <main className="app-main">{screen}</main>
       <AddJobDialog open={adding} onClose={() => setAdding(false)} onSubmit={addJob} />

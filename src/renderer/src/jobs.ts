@@ -31,8 +31,15 @@ export interface Job {
   /** The tracker row (company|role) this job's run added or changed, once known. */
   trackerKey: string | null
   createdAt: number
-  /** 'apply' jobs are board cards; 'outcome' jobs are status updates (shown in the tray and their own page). */
-  kind: 'apply' | 'outcome'
+  /**
+   * 'apply': a board card. 'outcome': a status update. 'search': Find new jobs
+   * (/scrape, then /rank), shown on the Search & rank screen.
+   */
+  kind: 'apply' | 'outcome' | 'search'
+  /** For a search: which of its two commands is (or was last) running. */
+  stage?: 'scrape' | 'rank'
+  /** For an application started from a ranked job: that job's key. */
+  rankedKey?: string
   /** For a status update: the row (company|role) being updated. */
   target?: string
 }
@@ -149,7 +156,7 @@ export function applyEvent(job: Job, event: RunEvent): Job {
     case 'denied':
       return { ...job, denied: [...job.denied, { detail: event.detail, reason: event.reason }] }
     case 'finished': {
-      const isApply = job.kind !== 'outcome'
+      const isApply = (job.kind ?? 'apply') === 'apply'
       const score = isApply ? parseScore(event.result) : null
       return {
         ...job,

@@ -121,7 +121,7 @@ test('board: rows in their columns, a linked job shows once, unlinked jobs in Sh
   const linked = { ...newJob('j1', 'beta posting', '', 10), trackerKey: 'beta|engineer' }
   const fresh = newJob('j2', 'new posting', 'r2', 20)
   const cards = buildBoard(rows, [linked, fresh])
-  const where = (k: string) => cards.filter((c) => c.column === k).map((c) => (c.kind === 'row' ? c.row.company : `job:${c.job.id}`))
+  const where = (k: string) => cards.filter((c) => c.column === k).map((c) => (c.kind === 'row' ? c.row.company : c.kind === 'job' ? `job:${c.job.id}` : `ranked:${c.ranked.key}`))
   assert.deepEqual(where('applied'), ['Acme'])
   assert.deepEqual(where('closed'), ['Gamma'])
   assert.deepEqual(where('shortlisted').sort(), ['Beta', 'job:j2'])

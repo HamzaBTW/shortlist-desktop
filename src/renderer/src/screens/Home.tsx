@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { WorkspaceStatus } from '../../../shared/ipc'
+import type { Pick, RankedJob } from '../../../shared/search'
 import { BOARD_COLUMNS, type TrackerData } from '../../../shared/tracker'
 import { buildBoard, type Card } from '../board'
 import { FitRing } from '../components/FitRing'
@@ -30,6 +31,10 @@ interface HomeProps {
   /** Status updates run a command, so they need the engine and no other run going. */
   canUpdate: boolean
   onUpdateStatus: (target: StatusTarget) => void
+  ranked: RankedJob[]
+  picks: Record<string, Pick>
+  onFindJobs: () => void
+  onCheckRanked: (r: RankedJob) => void
   onNavigate: (route: Route) => void
 }
 
@@ -41,9 +46,11 @@ interface BoardCardProps {
   canUpdate: boolean
   onUpdate: (target: StatusTarget) => void
   onOpenUpdate: (id: string) => void
+  onCheckRanked: (r: RankedJob) => void
 }
 
 function updateTarget(card: Card): StatusTarget | null {
+  if (card.kind === 'ranked') return null
   if (card.kind === 'row') {
     if (card.column === 'closed' || card.row.status === 'hired') return null
     return { company: card.row.company, role: card.row.role, column: card.column, matchKey: card.row.matchKey }
@@ -51,7 +58,7 @@ function updateTarget(card: Card): StatusTarget | null {
   return card.job.phase === 'running' ? null : { company: card.job.title, role: '', column: 'shortlisted' }
 }
 
-function BoardCard({ card, update, onOpen, canUpdate, onUpdate, onOpenUpdate }: BoardCardProps) {
+function BoardCard({ card, update, onOpen, canUpdate, onUpdate, onOpenUpdate, onCheckRanked }: BoardCardProps) {
   const { t } = useTranslation()
   const job = card.job
   const needsYou = job ? job.asks.length + job.questions.length > 0 : false
@@ -73,6 +80,12 @@ function BoardCard({ card, update, onOpen, canUpdate, onUpdate, onOpenUpdate }: 
     badge = { tone: FINAL.has(r.status) ? 'muted' : card.column === 'shortlisted' ? 'muted' : 'info', text: label }
     if (r.deadline && !FINAL.has(r.status)) meta = t('card.deadline', { date: r.deadline })
     else if (r.date) meta = t(r.status === 'drafted' ? 'card.drafted' : 'card.dated', { date: r.date })
+  } else if (card.kind === 'ranked') {
+    title = card.ranked.company || card.ranked.title
+    subtitle = card.ranked.company ? card.ranked.title : ''
+    score = card.ranked.score
+    badge = { tone: 'muted', text: t('status.ranked') }
+    if (card.ranked.deadline) meta = t('card.deadline', { date: card.ranked.deadline })
   } else {
     title = card.job.title
     subtitle = t(`job.phase.${card.job.phase}`)
@@ -100,8 +113,19 @@ function BoardCard({ card, update, onOpen, canUpdate, onUpdate, onOpenUpdate }: 
             {badge && <span className={`sl-badge sl-badge--${badge.tone}`}>{badge.text}</span>}
           </span>
         )}
-        {meta && <span className="sl-t-sm">{meta}</span>}
+        {meta && <span className="sl-t-sm job-card__meta">{meta}</span>}
       </button>
+      {card.kind === 'ranked' && (
+        <button
+          type="button"
+          className="sl-btn sl-btn--sm card-action"
+          disabled={!canUpdate}
+          onClick={() => onCheckRanked(card.ranked)}
+          aria-label={`${t('search.check')}: ${title}`}
+        >
+          {t('search.check')}
+        </button>
+      )}
       {target && !update && (
         <button
           type="button"
@@ -118,9 +142,9 @@ function BoardCard({ card, update, onOpen, canUpdate, onUpdate, onOpenUpdate }: 
 }
 
 export function Home(props: HomeProps) {
-  const { workspace, engineReady, canAdd, jobs, tracker, onAddJob, onOpenJob, onOpenRow, canUpdate, onUpdateStatus, onNavigate } = props
+  const { workspace, engineReady, canAdd, jobs, tracker, onAddJob, onOpenJob, onOpenRow, canUpdate, onUpdateStatus, ranked, picks, onFindJobs, onCheckRanked, onNavigate } = props
   const { t } = useTranslation()
-  const cards = buildBoard(tracker?.rows ?? [], jobs)
+  const cards = buildBoard(tracker?.rows ?? [], jobs, ranked, picks)
 
   return (
     <div className="screen">
@@ -130,7 +154,7 @@ export function Home(props: HomeProps) {
           <button type="button" className="sl-btn" disabled={!canAdd} onClick={onAddJob}>
             {t('home.addJob')}
           </button>
-          <button type="button" className="sl-btn sl-btn--primary" disabled>
+          <button type="button" className="sl-btn sl-btn--primary" disabled={!canAdd} onClick={onFindJobs}>
             {t('home.findJobs')}
           </button>
         </div>
@@ -173,6 +197,7 @@ export function Home(props: HomeProps) {
                     canUpdate={canUpdate}
                     onUpdate={onUpdateStatus}
                     onOpenUpdate={onOpenJob}
+                    onCheckRanked={onCheckRanked}
                     update={
                       card.kind === 'row'
                         ? (jobs.find(

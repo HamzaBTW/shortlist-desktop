@@ -4,7 +4,14 @@ import path from 'node:path'
 // The CLI only asks us about actions those settings don't already allow.
 // Some actions are refused outright; everything else goes to the person.
 
-export type Verdict = { decision: 'deny'; reason: string } | { decision: 'ask' }
+export type Verdict = { decision: 'deny'; reason: string } | { decision: 'ask' } | { decision: 'allow' }
+
+export interface PolicyOptions {
+  /** Let WebFetch / WebSearch go ahead without a card. */
+  allowWeb?: boolean
+}
+
+const WEB_TOOLS = new Set(['WebFetch', 'WebSearch'])
 
 export type DenyReason = 'outsideFolder' | 'gitPush' | 'deleteFolder' | 'admin'
 
@@ -36,7 +43,9 @@ function isInside(folder: string, target: string): boolean {
   return rel === '' || !(rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel))
 }
 
-export function judge(tool: string, input: Record<string, unknown>, workspace: string): Verdict {
+export function judge(tool: string, input: Record<string, unknown>, workspace: string, opts: PolicyOptions = {}): Verdict {
+  if (WEB_TOOLS.has(tool)) return opts.allowWeb ? { decision: 'allow' } : { decision: 'ask' }
+
   const fileKey = FILE_TOOLS[tool]
   if (fileKey) {
     const target = input[fileKey]

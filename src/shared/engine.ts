@@ -19,7 +19,9 @@ export interface EngineStatus {
 }
 
 /** Commands the screens may start. Anything else is refused by the main process. */
-export const RUNNABLE_COMMANDS = ['apply', 'outcome'] as const
+export const RUNNABLE_COMMANDS = ['apply', 'outcome', 'scrape', 'rank'] as const
+/** Commands that run with nothing after them. */
+export const NO_INPUT_COMMANDS: readonly RunnableCommand[] = ['scrape', 'rank']
 export type RunnableCommand = (typeof RUNNABLE_COMMANDS)[number]
 
 export interface StartRun {

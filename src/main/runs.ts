@@ -1,5 +1,5 @@
 import type { WebContents } from 'electron'
-import { RUNNABLE_COMMANDS, type ContinueRun, type RunEvent, type StartRun } from '../shared/engine'
+import { NO_INPUT_COMMANDS, RUNNABLE_COMMANDS, type RunnableCommand, type ContinueRun, type RunEvent, type StartRun } from '../shared/engine'
 import { Channels, type RunStartResult } from '../shared/ipc'
 import { ClaudeCodeRun } from './engine/claude-code'
 import { loadSettings } from './settings'
@@ -20,7 +20,8 @@ function begin(target: WebContents, prompt: string, resume?: string): RunStartRe
   if (current?.running) return { ok: false, reason: 'busy' }
   const ws = currentWorkspace()
   if (!ws?.ok) return { ok: false, reason: 'noWorkspace' }
-  const run = new ClaudeCodeRun(ws.path, !loadSettings().askEveryChange, emitTo(target))
+  const s = loadSettings()
+  const run = new ClaudeCodeRun(ws.path, { acceptEdits: !s.askEveryChange, allowWeb: !s.askWeb }, emitTo(target))
   current = run
   run.start(prompt, resume)
   return { ok: true, runId: run.runId }
@@ -32,8 +33,9 @@ export function startRun(target: WebContents, raw: unknown): RunStartResult {
     return { ok: false, reason: 'badInput' }
   }
   const input = req.input.trim()
-  if (!input || input.length > MAX_INPUT) return { ok: false, reason: 'badInput' }
-  return begin(target, `/${req.command} ${input}`)
+  if (input.length > MAX_INPUT) return { ok: false, reason: 'badInput' }
+  if (!input && !NO_INPUT_COMMANDS.includes(req.command as RunnableCommand)) return { ok: false, reason: 'badInput' }
+  return begin(target, input ? `/${req.command} ${input}` : `/${req.command}`)
 }
 
 export function continueRun(target: WebContents, raw: unknown): RunStartResult {

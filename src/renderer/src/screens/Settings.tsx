@@ -58,6 +58,22 @@ export function Settings({ settings, onChange, workspace, onWorkspace, engine, o
             onClick={() => onChange({ askEveryChange: !settings.askEveryChange })}
           />
         </div>
+        <div className="setting-row">
+          <span className="sl-col">
+            <span id="ask-web-label" className="setting-row__label">
+              {t('settings.askWeb')}
+            </span>
+            <span className="sl-t-sm">{t(settings.askWeb ? 'settings.askWebOn' : 'settings.askWebOff')}</span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            className="sl-switch"
+            aria-checked={settings.askWeb}
+            aria-labelledby="ask-web-label"
+            onClick={() => onChange({ askWeb: !settings.askWeb })}
+          />
+        </div>
         <p className="sl-t-sm">{t('settings.alwaysRefused')}</p>
       </section>
 

@@ -22,6 +22,10 @@ const api: ShortlistApi = {
   saveJob: (job) => ipcRenderer.invoke(Channels.jobsSave, job),
   deleteJob: (id) => ipcRenderer.invoke(Channels.jobsDelete, id),
   readTracker: () => ipcRenderer.invoke(Channels.trackerRead),
+  readSearch: () => ipcRenderer.invoke(Channels.searchRead),
+  listPicks: () => ipcRenderer.invoke(Channels.picksList),
+  setPick: (key, pick) => ipcRenderer.invoke(Channels.picksSet, { key, pick }),
+  openLink: (url) => ipcRenderer.invoke(Channels.openLink, url),
   onRunEvent: (listener) => {
     const wrapped = (_event: IpcRendererEvent, payload: RunEvent): void => listener(payload)
     ipcRenderer.on(Channels.runEvent, wrapped)

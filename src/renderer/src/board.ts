@@ -1,3 +1,4 @@
+import type { Pick, RankedJob } from '../../shared/search.ts'
 import { columnFor, type BoardColumn, type TrackerRow } from '../../shared/tracker.ts'
 import type { Job } from './jobs'
 
@@ -7,10 +8,17 @@ import type { Job } from './jobs'
 export type Card =
   | { kind: 'row'; key: string; column: BoardColumn; row: TrackerRow; job: Job | null }
   | { kind: 'job'; key: string; column: BoardColumn; job: Job }
+  | { kind: 'ranked'; key: string; column: BoardColumn; ranked: RankedJob; job: null }
 
-export function buildBoard(rows: TrackerRow[], jobs: Job[]): Card[] {
+export function buildBoard(
+  rows: TrackerRow[],
+  jobs: Job[],
+  ranked: RankedJob[] = [],
+  picks: Record<string, Pick> = {}
+): Card[] {
   const byKey = new Map<string, Job>()
-  jobs = jobs.filter((j) => j.kind !== 'outcome')
+  jobs = jobs.filter((j) => (j.kind ?? 'apply') === 'apply')
+  const started = new Set(jobs.map((j) => j.rankedKey).filter(Boolean))
   for (const j of jobs) {
     if (!j.trackerKey) continue
     const prev = byKey.get(j.trackerKey)
@@ -29,12 +37,19 @@ export function buildBoard(rows: TrackerRow[], jobs: Job[]): Card[] {
     if (job.trackerKey && rowKeys.has(job.trackerKey)) continue
     cards.push({ kind: 'job', key: job.id, column: 'shortlisted', job })
   }
+  // Ranked jobs the person added to the board, until they start an application for one.
+  for (const r of ranked) {
+    if (picks[r.key] === 'board' && !started.has(r.key)) {
+      cards.push({ kind: 'ranked', key: `ranked-${r.key}`, column: 'shortlisted', ranked: r, job: null })
+    }
+  }
   // Newest first inside each column: in-app jobs by when added, rows by tracker order (latest at the end).
   return cards.sort((a, b) => order(b) - order(a))
 }
 
 function order(c: Card): number {
   if (c.kind === 'job') return c.job.createdAt
+  if (c.kind === 'ranked') return Date.parse(c.ranked.rankedOn) || 0
   const t = Date.parse(c.row.date)
   return Number.isFinite(t) ? t : 0
 }

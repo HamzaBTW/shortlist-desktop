@@ -2,6 +2,7 @@
 // Everything the screens can ask for is listed here; nothing else is exposed.
 
 import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
+import type { Pick, SearchData } from './search'
 import type { TrackerData } from './tracker'
 
 export const THEME_CHOICES = ['system', 'midnight', 'light-relax'] as const
@@ -15,9 +16,11 @@ export interface Settings {
    * folder go ahead (the folder's own "ask" rules and the app's refusals still apply).
    */
   askEveryChange: boolean
+  /** Ask before every web page or web search. Off: reading the web goes ahead. */
+  askWeb: boolean
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false }
 
 export interface AppInfo {
   name: string
@@ -55,6 +58,10 @@ export const Channels = {
   jobsSave: 'jobs:save',
   jobsDelete: 'jobs:delete',
   trackerRead: 'tracker:read',
+  searchRead: 'search:read',
+  picksList: 'picks:list',
+  picksSet: 'picks:set',
+  openLink: 'link:open',
   /** Main -> screens: progress of the current run. */
   runEvent: 'run:event'
 } as const
@@ -90,6 +97,13 @@ export interface ShortlistApi {
   deleteJob(id: string): Promise<boolean>
   /** The folder's job_search_tracker.csv, read-only. */
   readTracker(): Promise<TrackerData>
+  /** Jobs /scrape found and /rank scored (seen_jobs.json, read-only). */
+  readSearch(): Promise<SearchData>
+  /** "Add to board" / "Hide" decisions on ranked jobs (the app's own store). */
+  listPicks(): Promise<Record<string, Pick>>
+  setPick(key: string, pick: Pick | null): Promise<boolean>
+  /** Opens a web link (http/https only) in the person's own browser. */
+  openLink(url: string): Promise<boolean>
   /** Subscribe to run progress; returns an unsubscribe function. */
   onRunEvent(listener: (event: RunEvent) => void): () => void
 }
@@ -104,5 +118,6 @@ export function cleanSettings(input: unknown, base: Settings = DEFAULT_SETTINGS)
   }
   if (typeof raw.guide === 'boolean') out.guide = raw.guide
   if (typeof raw.askEveryChange === 'boolean') out.askEveryChange = raw.askEveryChange
+  if (typeof raw.askWeb === 'boolean') out.askWeb = raw.askWeb
   return out
 }

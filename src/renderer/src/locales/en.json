@@ -45,7 +45,10 @@
     "askEveryChange": "Ask before every file change in your folder",
     "askEveryOff": "Off: commands can change files inside your folder without asking. Your folder's protected files (its code and settings) still ask.",
     "askEveryOn": "On: every file change shows an Allow once / Deny card.",
-    "alwaysRefused": "Always refused, whatever this switch says: changes outside your folder, uploading to GitHub, deleting folders and admin commands."
+    "alwaysRefused": "Always refused, whatever this switch says: changes outside your folder, uploading to GitHub, deleting folders and admin commands.",
+    "askWeb": "Ask before it looks things up online",
+    "askWebOff": "Off: commands can read job pages and search the web without asking. Your folder's rules on robots.txt and site terms still apply.",
+    "askWebOn": "On: every web page and web search shows an Allow once / Deny card."
   },
   "placeholder": {
     "body": "This screen comes later."
@@ -248,5 +251,39 @@
     "submit": "Record it",
     "jobTitle": "{{company}}: {{status}}",
     "updating": "Updating…"
+  },
+  "search": {
+    "jobTitle": "Finding new jobs",
+    "never": "No search yet. Find new jobs searches your job sites, then ranks what it finds against your profile.",
+    "summary": "{{ranked}} ranked jobs to look at · {{waiting}} found but not ranked yet.",
+    "lastRanked": "Last ranked {{date}}.",
+    "rankRest": "Rank {{count}} more",
+    "stage": {
+      "scrape": "Searching your job sites",
+      "rank": "Ranking what it found"
+    },
+    "step": {
+      "scrape": "Search job sites",
+      "rank": "Rank against your profile"
+    },
+    "report": "Report from the last search",
+    "verdict": "{{verdict}} fit",
+    "checkLocation": "Check location",
+    "checkLanguage": "Check language",
+    "flagged": "Posting flagged",
+    "storedText": "From Indeed (stored text)",
+    "check": "Check my fit",
+    "started": "Application started",
+    "addToBoard": "Add to board",
+    "onBoard": "On board",
+    "open": "Open posting",
+    "hide": "Hide",
+    "unhide": "Show again",
+    "showHidden": "Show {{count}} hidden",
+    "hideHidden": "Hide the hidden ones again",
+    "error": {
+      "unreadable": "The list of found jobs couldn't be read.",
+      "tooLarge": "The list of found jobs is too large to show here."
+    }
   }
 }

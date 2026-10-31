@@ -3,15 +3,17 @@ import { test } from 'node:test'
 import { cleanSettings, DEFAULT_SETTINGS } from '../src/shared/ipc.ts'
 
 test('keeps valid values', () => {
-  assert.deepEqual(cleanSettings({ theme: 'midnight', guide: false, askEveryChange: true }), {
+  assert.deepEqual(cleanSettings({ theme: 'midnight', guide: false, askEveryChange: true, askWeb: true }), {
     theme: 'midnight',
     guide: false,
-    askEveryChange: true
+    askEveryChange: true,
+    askWeb: true
   })
 })
 
-test('by default, file changes inside the folder do not ask', () => {
+test('by default, file changes inside the folder and reading the web do not ask', () => {
   assert.equal(DEFAULT_SETTINGS.askEveryChange, false)
+  assert.equal(DEFAULT_SETTINGS.askWeb, false)
 })
 
 test('drops unknown keys and bad values', () => {
@@ -21,6 +23,6 @@ test('drops unknown keys and bad values', () => {
 })
 
 test('a patch only changes what it names', () => {
-  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true }
-  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true })
+  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true, askWeb: false }
+  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true, askWeb: false })
 })
