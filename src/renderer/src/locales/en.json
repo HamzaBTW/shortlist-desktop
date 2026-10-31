@@ -98,5 +98,82 @@
       "notFound": "Install Claude Code from Anthropic's website, sign in once, then press Check again.",
       "outdated": "Update Claude Code (run \"claude update\" in a terminal), then press Check again. Older versions trust compromised security certificates."
     }
+  },
+  "addJob": {
+    "title": "Add a job",
+    "label": "Paste a job link or the posting text",
+    "placeholder": "https://… or the full posting",
+    "note": "We check how well it fits you first. Nothing is drafted until you say so.",
+    "cancel": "Cancel",
+    "submit": "Check my fit"
+  },
+  "run": {
+    "refused": {
+      "busy": "Another job is still running. Wait for it to finish, or stop it first.",
+      "noWorkspace": "Choose your ai-job-search folder in Settings first.",
+      "badInput": "That can't be sent. Paste a link or the posting text."
+    }
+  },
+  "job": {
+    "back": "Pipeline",
+    "working": "Working on it",
+    "stop": "Stop",
+    "stopNote": "Stopping keeps any files already written.",
+    "needsYou": "Needs your OK",
+    "phase": {
+      "running": "Working…",
+      "waiting": "Waiting for you",
+      "notNow": "Not now",
+      "failed": "Stopped"
+    },
+    "next": {
+      "decide": "Your decision"
+    },
+    "deniedTitle": "Blocked for your safety"
+  },
+  "step": {
+    "start": "Starting",
+    "reading": "Reading your files",
+    "posting": "Reading the posting",
+    "web": "Looking things up",
+    "checking": "Running a check",
+    "writing": "Writing files",
+    "thinking": "Thinking it through"
+  },
+  "ask": {
+    "badge": "Your OK",
+    "title": {
+      "command": "It wants to run a command",
+      "write": "It wants to change a file",
+      "web": "It wants to look something up online",
+      "other": "It wants to use a tool"
+    },
+    "hint": "Nothing happens until you choose. Allow once lets this one action through.",
+    "allow": "Allow once",
+    "deny": "Deny",
+    "questionTitle": "A question for you",
+    "other": "Or type your own answer",
+    "send": "Send answer"
+  },
+  "deny": {
+    "outsideFolder": "Writing outside your folder:",
+    "gitPush": "Uploading to GitHub:",
+    "deleteFolder": "Deleting a folder:",
+    "admin": "Running as administrator:"
+  },
+  "fit": {
+    "title": "How well it fits",
+    "update": "Latest update",
+    "ringLabel": "Fit score {{score}} out of 100",
+    "verdict": {
+      "strong": "Strong fit",
+      "moderate": "Moderate fit",
+      "weak": "Weak fit"
+    },
+    "prepare": "Prepare application",
+    "notNow": "Not now",
+    "notNowNote": "Kept as is. You can still reply below to prepare it later.",
+    "replyLabel": "Reply",
+    "send": "Send"
   }
 }

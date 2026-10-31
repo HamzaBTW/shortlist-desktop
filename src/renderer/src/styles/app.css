@@ -224,3 +224,261 @@ button {
   align-items: center;
   gap: var(--space-3);
 }
+
+/* Buttons that are cards */
+.job-card {
+  width: 100%;
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 150ms ease;
+}
+
+.job-card:hover {
+  border-color: var(--line-strong);
+}
+
+.tray-job {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: start;
+  color: var(--ink);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.tray-job__title {
+  font: 700 14px/20px var(--font-sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Form fields */
+.field {
+  width: 100%;
+  font: 400 15px/22px var(--font-sans);
+  color: var(--ink);
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+}
+
+.field--area {
+  resize: vertical;
+  min-height: 64px;
+}
+
+/* Add a job */
+.dialog {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-pop);
+  padding: 0;
+  width: min(600px, calc(100vw - 2 * var(--space-5)));
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.dialog__actions {
+  justify-content: flex-end;
+}
+
+/* Job detail */
+.back {
+  align-self: flex-start;
+}
+
+.job-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.job-head__title {
+  overflow-wrap: anywhere;
+}
+
+.job-head .sl-badge {
+  align-self: flex-start;
+}
+
+.job-progress {
+  width: auto;
+  max-width: 560px;
+}
+
+.ask {
+  max-width: 720px;
+}
+
+.ask__detail {
+  font: 500 13px/19px var(--font-mono);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.ask__question {
+  font: 700 15px/22px var(--font-sans);
+  margin-block-end: var(--space-2);
+}
+
+.choice--card {
+  align-items: flex-start;
+}
+
+.choice--card input {
+  margin-block-start: 3px;
+}
+
+.choice__desc {
+  display: block;
+}
+
+.fail {
+  max-width: 720px;
+}
+
+.fit-card {
+  flex: none;
+  max-width: 880px;
+}
+
+.reply {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-block-start: 1px solid var(--line);
+  padding-block-start: var(--space-4);
+}
+
+.plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Command output */
+.md {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-wrap: anywhere;
+}
+
+.md h3,
+.md h4,
+.md h5,
+.md h6 {
+  margin: var(--space-2) 0 0;
+  font: 700 16px/22px var(--font-sans);
+}
+
+.md p,
+.md ul,
+.md ol,
+.md blockquote,
+.md pre {
+  margin: 0;
+}
+
+.md ul,
+.md ol {
+  padding-inline-start: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.md blockquote {
+  padding-inline-start: var(--space-3);
+  border-inline-start: 3px solid var(--line-strong);
+  color: var(--ink-muted);
+}
+
+.md code,
+.md pre,
+.plain code {
+  font: 500 13px/19px var(--font-mono);
+  background: var(--surface-sunken);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.md pre {
+  padding: var(--space-3);
+  overflow-x: auto;
+}
+
+.md-table {
+  overflow-x: auto;
+}
+
+.md table {
+  border-collapse: collapse;
+  font: 400 13px/19px var(--font-sans);
+}
+
+.md th,
+.md td {
+  border: 1px solid var(--line);
+  padding: var(--space-1) var(--space-2);
+  text-align: start;
+  vertical-align: top;
+}
+
+.md th {
+  background: var(--surface-sunken);
+}
+
+.job-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.job-card__row .sl-ring {
+  flex: none;
+}
+
+.job-card__row .sl-col {
+  min-width: 0;
+  gap: var(--space-1);
+  align-items: flex-start;
+}
+
+.job-card .sl-jobcard__co {
+  overflow-wrap: anywhere;
+}
+
+.job-card__row .sl-col {
+  flex: 1;
+}
+
+.job-card__row .sl-badge {
+  white-space: normal;
+  max-width: 100%;
+}

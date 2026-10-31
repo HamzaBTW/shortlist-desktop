@@ -43,6 +43,7 @@ export const Channels = {
   runStart: 'run:start',
   runContinue: 'run:continue',
   runAnswer: 'run:answer',
+  runAnswerQuestion: 'run:answerQuestion',
   runCancel: 'run:cancel',
   /** Main -> screens: progress of the current run. */
   runEvent: 'run:event'
@@ -70,6 +71,8 @@ export interface ShortlistApi {
   startRun(request: StartRun): Promise<RunStartResult>
   continueRun(request: ContinueRun): Promise<RunStartResult>
   answerPermission(requestId: string, allow: boolean): Promise<boolean>
+  /** answers: question text -> chosen label(s) or the person's own words. */
+  answerQuestion(requestId: string, answers: Record<string, string>): Promise<boolean>
   cancelRun(): Promise<void>
   /** Subscribe to run progress; returns an unsubscribe function. */
   onRunEvent(listener: (event: RunEvent) => void): () => void

@@ -1,8 +1,9 @@
 import { execFile, spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
+import path from 'node:path'
 import readline from 'node:readline'
 import { APP_NAME } from '../../shared/app-info'
-import type { EngineStatus, PermissionAsk, RunEvent } from '../../shared/engine'
+import type { EngineStatus, PermissionAsk, Question, RunEvent } from '../../shared/engine'
 import { findClaude, parseVersion, versionAtLeast, type ClaudeBinary } from './find'
 import { judge } from './policy'
 
@@ -87,13 +88,34 @@ type Emit = (event: RunEvent) => void
 
 interface PendingAsk {
   input: Record<string, unknown>
+  kind: 'permission' | 'question'
 }
 
-function describe(tool: string, input: Record<string, unknown>): Pick<PermissionAsk, 'detail' | 'kind'> {
+function readQuestions(input: Record<string, unknown>): Question[] {
+  const raw = Array.isArray(input['questions']) ? (input['questions'] as Record<string, unknown>[]) : []
+  return raw.map((q) => ({
+    question: String(q['question'] ?? ''),
+    header: String(q['header'] ?? ''),
+    multiSelect: q['multiSelect'] === true,
+    options: (Array.isArray(q['options']) ? (q['options'] as Record<string, unknown>[]) : []).map((o) => ({
+      label: String(o['label'] ?? ''),
+      description: String(o['description'] ?? '')
+    }))
+  }))
+}
+
+/** A file inside the workspace is shown relative to it ("cv/main_acme.tex"); others in full. */
+function shortPath(p: string, workspace: string): string {
+  if (!p) return p
+  const rel = path.relative(workspace, path.resolve(workspace, p))
+  return rel && !rel.startsWith('..') && !path.isAbsolute(rel) ? rel : p
+}
+
+function describe(tool: string, input: Record<string, unknown>, workspace: string): Pick<PermissionAsk, 'detail' | 'kind'> {
   const str = (k: string): string => (typeof input[k] === 'string' ? (input[k] as string) : '')
   if (tool === 'Bash' || tool === 'PowerShell') return { kind: 'command', detail: str('command') }
-  if (tool in { Write: 1, Edit: 1, MultiEdit: 1 }) return { kind: 'write', detail: str('file_path') }
-  if (tool === 'NotebookEdit') return { kind: 'write', detail: str('notebook_path') }
+  if (tool in { Write: 1, Edit: 1, MultiEdit: 1 }) return { kind: 'write', detail: shortPath(str('file_path'), workspace) }
+  if (tool === 'NotebookEdit') return { kind: 'write', detail: shortPath(str('notebook_path'), workspace) }
   if (tool === 'WebFetch') return { kind: 'web', detail: str('url') }
   if (tool === 'WebSearch') return { kind: 'web', detail: str('query') }
   return { kind: 'other', detail: tool }
@@ -161,9 +183,19 @@ export class ClaudeCodeRun {
   /** The person's answer to a permission card. */
   answer(requestId: string, allow: boolean): boolean {
     const ask = this.pending.get(requestId)
-    if (!ask) return false
+    if (!ask || ask.kind !== 'permission') return false
     this.pending.delete(requestId)
     this.respond(requestId, allow ? { behavior: 'allow', updatedInput: ask.input } : { behavior: 'deny', message: 'The person chose Deny.' })
+    this.emit({ type: 'permissionClosed', runId: this.runId, requestId })
+    return true
+  }
+
+  /** The person's answers to a question form. */
+  answerQuestion(requestId: string, answers: Record<string, string>): boolean {
+    const ask = this.pending.get(requestId)
+    if (!ask || ask.kind !== 'question') return false
+    this.pending.delete(requestId)
+    this.respond(requestId, { behavior: 'allow', updatedInput: { ...ask.input, answers } })
     this.emit({ type: 'permissionClosed', runId: this.runId, requestId })
     return true
   }
@@ -254,8 +286,14 @@ export class ClaudeCodeRun {
 
     const tool = typeof request['tool_name'] === 'string' ? request['tool_name'] : 'unknown'
     const input = (typeof request['input'] === 'object' && request['input'] !== null ? request['input'] : {}) as Record<string, unknown>
+    if (tool === 'AskUserQuestion') {
+      this.pending.set(requestId, { input, kind: 'question' })
+      this.emit({ type: 'question', runId: this.runId, ask: { requestId, questions: readQuestions(input) } })
+      return
+    }
+
     const verdict = judge(tool, input, this.workspace)
-    const { detail, kind } = describe(tool, input)
+    const { detail, kind } = describe(tool, input, this.workspace)
 
     if (verdict.decision === 'deny') {
       this.respond(requestId, { behavior: 'deny', message: `The ${APP_NAME} app never allows this (${verdict.reason}).` })
@@ -263,7 +301,7 @@ export class ClaudeCodeRun {
       return
     }
 
-    this.pending.set(requestId, { input })
+    this.pending.set(requestId, { input, kind: 'permission' })
     this.emit({ type: 'permission', runId: this.runId, ask: { requestId, tool, detail, kind } })
   }
 }

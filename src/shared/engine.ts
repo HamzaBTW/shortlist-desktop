@@ -42,12 +42,31 @@ export interface PermissionAsk {
   kind: 'command' | 'write' | 'web' | 'other'
 }
 
+export interface QuestionOption {
+  label: string
+  description: string
+}
+
+export interface Question {
+  question: string
+  header: string
+  options: QuestionOption[]
+  multiSelect: boolean
+}
+
+/** A question the command asks mid-run (Claude Code's AskUserQuestion), shown as a form. */
+export interface QuestionAsk {
+  requestId: string
+  questions: Question[]
+}
+
 export type RunEvent =
   | { type: 'started'; runId: string }
   | { type: 'session'; runId: string; sessionId: string }
   | { type: 'tool'; runId: string; tool: string }
   | { type: 'text'; runId: string; text: string }
   | { type: 'permission'; runId: string; ask: PermissionAsk }
+  | { type: 'question'; runId: string; ask: QuestionAsk }
   | { type: 'permissionClosed'; runId: string; requestId: string }
   | { type: 'denied'; runId: string; detail: string; reason: string }
   | { type: 'finished'; runId: string; sessionId: string | null; result: string; isError: boolean }

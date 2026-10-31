@@ -49,6 +49,16 @@ export function answerPermission(raw: unknown): boolean {
   return current.answer(req.requestId, req.allow)
 }
 
+export function answerQuestion(raw: unknown): boolean {
+  const req = raw as { requestId?: unknown; answers?: unknown } | null
+  if (!current || !req || typeof req.requestId !== 'string' || typeof req.answers !== 'object' || req.answers === null) return false
+  const answers: Record<string, string> = {}
+  for (const [k, v] of Object.entries(req.answers as Record<string, unknown>)) {
+    if (typeof v === 'string' && v.length <= 4000) answers[k] = v
+  }
+  return current.answerQuestion(req.requestId, answers)
+}
+
 export function cancelRun(): void {
   current?.cancel()
 }

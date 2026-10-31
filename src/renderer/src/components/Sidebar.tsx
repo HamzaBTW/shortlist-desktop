@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/app-info'
+import type { Job } from '../jobs'
 
 export const ROUTES = ['home', 'search', 'profile', 'reports', 'settings'] as const
 export type Route = (typeof ROUTES)[number]
@@ -9,9 +10,11 @@ interface SidebarProps {
   onNavigate: (route: Route) => void
   guide: boolean
   onGuideChange: (on: boolean) => void
+  activeJob: Job | null
+  onOpenJob: (id: string) => void
 }
 
-export function Sidebar({ route, onNavigate, guide, onGuideChange }: SidebarProps) {
+export function Sidebar({ route, onNavigate, guide, onGuideChange, activeJob, onOpenJob }: SidebarProps) {
   const { t } = useTranslation()
 
   return (
@@ -38,7 +41,18 @@ export function Sidebar({ route, onNavigate, guide, onGuideChange }: SidebarProp
 
       <section className="sl-well app-tray" aria-label={t('tray.label')}>
         <span className="sl-t-label">{t('tray.label')}</span>
-        <span className="sl-t-sm">{t('tray.empty')}</span>
+        {activeJob ? (
+          <button type="button" className="tray-job" onClick={() => onOpenJob(activeJob.id)}>
+            <span className="tray-job__title">{activeJob.title}</span>
+            <span className="sl-t-sm">
+              {activeJob.asks.length + activeJob.questions.length > 0
+                ? `▲ ${t('job.needsYou')}`
+                : t(`step.${activeJob.steps[activeJob.steps.length - 1] ?? 'start'}`)}
+            </span>
+          </button>
+        ) : (
+          <span className="sl-t-sm">{t('tray.empty')}</span>
+        )}
       </section>
 
       <div className="app-guide">
