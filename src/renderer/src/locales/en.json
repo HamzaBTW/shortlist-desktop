@@ -129,7 +129,11 @@
     "next": {
       "decide": "Your decision"
     },
-    "deniedTitle": "Blocked for your safety"
+    "deniedTitle": "Blocked for your safety",
+    "stoppedOnClose": "The app closed while this was running. Reply below to continue where it stopped.",
+    "inTracker": "In your tracker: {{status}}",
+    "remove": "Remove from board",
+    "removeNote": "Removes it from this app only. Your files and tracker stay as they are."
   },
   "step": {
     "start": "Starting",
@@ -175,5 +179,45 @@
     "notNowNote": "Kept as is. You can still reply below to prepare it later.",
     "replyLabel": "Reply",
     "send": "Send"
+  },
+  "status": {
+    "ranked": "Ranked",
+    "drafted": "Drafted",
+    "applied": "Applied",
+    "interview": "Interviewing",
+    "offer": "Offer",
+    "hired": "Hired",
+    "rejected": "Not selected",
+    "no_response": "No reply",
+    "offer_declined": "Offer declined",
+    "withdrawn": "Withdrawn",
+    "expired": "Closed",
+    "unknown": "No status"
+  },
+  "card": {
+    "deadline": "Deadline {{date}}",
+    "drafted": "Drafted {{date}}",
+    "dated": "Since {{date}}"
+  },
+  "row": {
+    "date": "Date",
+    "drafted": "Drafted on",
+    "deadline": "Deadline",
+    "sector": "Sector",
+    "roleType": "Role type",
+    "channel": "Channel",
+    "contact": "Contact",
+    "cv": "CV",
+    "letter": "Cover letter",
+    "source": "Posting link",
+    "notes": "Notes",
+    "readOnly": "From your tracker (job_search_tracker.csv). This app only reads it; the job-search commands keep it up to date."
+  },
+  "tracker": {
+    "error": {
+      "unreadable": "Your tracker couldn't be read. It may be open in another program.",
+      "tooLarge": "Your tracker is too large to show here.",
+      "noHeader": "Your tracker's first line doesn't have the usual column names, so it can't be shown."
+    }
   }
 }

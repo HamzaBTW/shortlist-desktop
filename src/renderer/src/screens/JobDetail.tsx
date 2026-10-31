@@ -3,17 +3,21 @@ import { useTranslation } from 'react-i18next'
 import { PermissionCard, QuestionCard } from '../components/AskCards'
 import { FitRing } from '../components/FitRing'
 import { Markdown } from '../components/Markdown'
+import type { TrackerRow } from '../../../shared/tracker'
 import type { Job } from '../jobs'
 
 interface JobDetailProps {
   job: Job
+  /** The tracker row this job's run added or changed, when there is one. */
+  row: TrackerRow | null
   busy: boolean
   onReply: (job: Job, reply: string) => Promise<string | null>
   onNotNow: (job: Job) => void
+  onRemove: (job: Job) => void
   onBack: () => void
 }
 
-export function JobDetail({ job, busy, onReply, onNotNow, onBack }: JobDetailProps) {
+export function JobDetail({ job, row, busy, onReply, onNotNow, onRemove, onBack }: JobDetailProps) {
   const { t } = useTranslation()
   const [reply, setReply] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
@@ -37,6 +41,11 @@ export function JobDetail({ job, busy, onReply, onNotNow, onBack }: JobDetailPro
           <span className={`sl-badge ${running ? 'sl-badge--info' : job.phase === 'failed' ? 'sl-badge--danger' : 'sl-badge--muted'}`}>
             {t(`job.phase.${job.phase}`)}
           </span>
+          {row && (
+            <span className="sl-t-sm">
+              {t('job.inTracker', { status: t(`status.${row.status}`, { defaultValue: row.status }) })}
+            </span>
+          )}
         </div>
       </header>
 
@@ -95,7 +104,7 @@ export function JobDetail({ job, busy, onReply, onNotNow, onBack }: JobDetailPro
         </section>
       )}
 
-      {!running && job.result && (
+      {!running && (job.result || (job.phase === 'failed' && job.sessionId)) && (
         <section className="sl-tile fit-card" aria-labelledby="fit-title">
           <div className="sl-tile__head">
             <h2 id="fit-title" className="sl-t-title">
@@ -126,9 +135,9 @@ export function JobDetail({ job, busy, onReply, onNotNow, onBack }: JobDetailPro
             </p>
           )}
 
-          <Markdown text={job.result} />
+          {job.result && <Markdown text={job.result} />}
 
-          {job.sessionId && (job.phase === 'waiting' || job.phase === 'notNow') && (
+          {job.sessionId && job.phase !== 'running' && (
             <form
               className="reply"
               onSubmit={(e) => {
@@ -153,6 +162,14 @@ export function JobDetail({ job, busy, onReply, onNotNow, onBack }: JobDetailPro
               </div>
             </form>
           )}
+        </section>
+      )}
+      {!running && (
+        <section className="remove">
+          <button type="button" className="sl-btn sl-btn--quiet sl-btn--sm" onClick={() => onRemove(job)}>
+            {t('job.remove')}
+          </button>
+          <p className="sl-t-sm">{t('job.removeNote')}</p>
         </section>
       )}
     </div>

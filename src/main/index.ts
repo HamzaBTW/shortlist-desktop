@@ -1,7 +1,7 @@
 import { app, BrowserWindow, Menu, nativeTheme, session } from 'electron'
 import path from 'node:path'
 import { APP_NAME } from '../shared/app-info'
-import { applyNativeTheme, registerIpc } from './ipc'
+import { applyNativeTheme, closeStore, registerIpc } from './ipc'
 import { registerSchemePrivileges, serveRenderer } from './protocol'
 import { APP_ORIGIN, DEV_SERVER_URL, guardWebContents, hardenSession } from './security'
 import { loadSettings } from './settings'
@@ -65,6 +65,8 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
+
+app.on('will-quit', () => closeStore())
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

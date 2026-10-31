@@ -18,6 +18,10 @@ const api: ShortlistApi = {
   answerPermission: (requestId, allow) => ipcRenderer.invoke(Channels.runAnswer, { requestId, allow }),
   answerQuestion: (requestId, answers) => ipcRenderer.invoke(Channels.runAnswerQuestion, { requestId, answers }),
   cancelRun: () => ipcRenderer.invoke(Channels.runCancel),
+  listJobs: () => ipcRenderer.invoke(Channels.jobsList),
+  saveJob: (job) => ipcRenderer.invoke(Channels.jobsSave, job),
+  deleteJob: (id) => ipcRenderer.invoke(Channels.jobsDelete, id),
+  readTracker: () => ipcRenderer.invoke(Channels.trackerRead),
   onRunEvent: (listener) => {
     const wrapped = (_event: IpcRendererEvent, payload: RunEvent): void => listener(payload)
     ipcRenderer.on(Channels.runEvent, wrapped)

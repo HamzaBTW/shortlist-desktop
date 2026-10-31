@@ -1,4 +1,5 @@
 import type { PermissionAsk, QuestionAsk, RunEvent } from '../../shared/engine'
+import type { TrackerRow } from '../../shared/tracker'
 
 // A job the person added, and how run events change it. Kept in memory for now;
 // the app's own SQLite store comes later. The workspace files stay the source of truth.
@@ -27,6 +28,9 @@ export interface Job {
   verdict: Verdict | null
   /** The last turn stopped at /apply's "Should I proceed with drafting…?" */
   asksToProceed: boolean
+  /** The tracker row (company|role) this job's run added or changed, once known. */
+  trackerKey: string | null
+  createdAt: number
 }
 
 const TOOL_STEPS: Record<string, StepKey> = {
@@ -81,9 +85,11 @@ export function asksToProceed(text: string): boolean {
   return /proceed with drafting/i.test(text)
 }
 
-export function newJob(id: string, input: string, runId: string): Job {
+export function newJob(id: string, input: string, runId: string, createdAt = Date.now()): Job {
   return {
     id,
+    trackerKey: null,
+    createdAt,
     input,
     title: titleFor(input),
     runId,
@@ -151,4 +157,27 @@ export function applyEvent(job: Job, event: RunEvent): Job {
     case 'failed':
       return { ...job, runId: null, phase: 'failed', error: event.message, asks: [], questions: [] }
   }
+}
+
+/**
+ * A job read back from the app's store. Anything that was mid-run when the app
+ * closed is marked stopped; its session can still be continued with a reply.
+ */
+export function restore(raw: unknown, stoppedMessage: string): Job | null {
+  if (typeof raw !== 'object' || raw === null) return null
+  const j = raw as Partial<Job>
+  if (typeof j.id !== 'string' || typeof j.input !== 'string') return null
+  const base = newJob(j.id, j.input, '', typeof j.createdAt === 'number' ? j.createdAt : 0)
+  const job: Job = { ...base, ...j, runId: null, asks: [], questions: [] } as Job
+  if (job.phase === 'running') return { ...job, phase: 'failed', error: stoppedMessage }
+  return job
+}
+
+const signature = (r: TrackerRow): string => JSON.stringify({ ...r, id: '' })
+
+/** The tracker row a run added or changed, if any: compares the rows before and after. */
+export function changedRow(before: TrackerRow[], after: TrackerRow[]): string | null {
+  const seen = new Set(before.map(signature))
+  const changed = after.filter((r) => !seen.has(signature(r)))
+  return changed.length > 0 ? changed[changed.length - 1]!.matchKey : null
 }

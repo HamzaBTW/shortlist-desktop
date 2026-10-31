@@ -6,6 +6,9 @@ import { loadSettings, saveSettings } from './settings'
 import { chooseWorkspace, currentWorkspace, openWorkspace } from './workspace'
 import { detect, openSignIn } from './engine/claude-code'
 import { answerPermission, answerQuestion, cancelRun, continueRun, startRun } from './runs'
+import { Store } from './store'
+import { readTracker } from './tracker'
+import path from 'node:path'
 
 /** Only the app's own screens may call in; anything else is refused. */
 function handle<T>(channel: string, fn: (event: IpcMainInvokeEvent, ...args: unknown[]) => T): void {
@@ -19,6 +22,23 @@ function handle<T>(channel: string, fn: (event: IpcMainInvokeEvent, ...args: unk
 export function applyNativeTheme(settings: Settings): void {
   nativeTheme.themeSource =
     settings.theme === 'system' ? 'system' : settings.theme === 'midnight' ? 'dark' : 'light'
+}
+
+let store: Store | null = null
+function jobs(): Store {
+  store ??= new Store(path.join(app.getPath('userData'), 'shortlist.db'))
+  return store
+}
+
+export function closeStore(): void {
+  store?.close()
+  store = null
+}
+
+/** The saved folder, only when it still passes the check. */
+function workspacePath(): string | null {
+  const ws = currentWorkspace()
+  return ws?.ok ? ws.path : null
 }
 
 export function registerIpc(): void {
@@ -50,4 +70,21 @@ export function registerIpc(): void {
   handle(Channels.runAnswer, (_event, answer) => answerPermission(answer))
   handle(Channels.runAnswerQuestion, (_event, answer) => answerQuestion(answer))
   handle(Channels.runCancel, () => cancelRun())
+
+  handle(Channels.jobsList, () => {
+    const ws = workspacePath()
+    return ws ? jobs().listJobs(ws) : []
+  })
+  handle(Channels.jobsSave, (_event, job) => {
+    const ws = workspacePath()
+    return ws ? jobs().saveJob(ws, job) : false
+  })
+  handle(Channels.jobsDelete, (_event, id) => {
+    const ws = workspacePath()
+    return ws ? jobs().deleteJob(ws, id) : false
+  })
+  handle(Channels.trackerRead, () => {
+    const ws = workspacePath()
+    return ws ? readTracker(ws) : { found: false, rows: [] }
+  })
 }

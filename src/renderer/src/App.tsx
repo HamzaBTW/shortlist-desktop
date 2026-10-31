@@ -3,16 +3,18 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { EngineStatus } from '../../shared/engine'
 import { DEFAULT_SETTINGS, type RunStartResult, type Settings as SettingsData, type WorkspaceStatus } from '../../shared/ipc'
+import type { TrackerData, TrackerRow } from '../../shared/tracker'
 import { AddJobDialog } from './components/AddJobDialog'
 import { Sidebar, type Route } from './components/Sidebar'
-import { applyEvent, continued, newJob, type Job } from './jobs'
+import { applyEvent, changedRow, continued, newJob, restore, type Job } from './jobs'
 import { Home } from './screens/Home'
 import { JobDetail } from './screens/JobDetail'
 import { Placeholder } from './screens/Placeholder'
+import { RowDetail } from './screens/RowDetail'
 import { Settings } from './screens/Settings'
 import { useTheme } from './useTheme'
 
-export type View = Route | { job: string }
+export type View = Route | { job: string } | { row: string }
 
 export function App() {
   const { t } = useTranslation()
@@ -21,26 +23,79 @@ export function App() {
   const [workspace, setWorkspace] = useState<WorkspaceStatus | null>(null)
   const [engine, setEngine] = useState<EngineStatus | null>(null)
   const [jobs, setJobs] = useState<Job[]>([])
+  const [tracker, setTracker] = useState<TrackerData | null>(null)
   const [adding, setAdding] = useState(false)
-  const jobCount = useRef(0)
+
+  // Tracker rows as they were when each run started, and which job each run belongs to.
+  const before = useRef(new Map<string, { jobId: string; rows: TrackerRow[] }>())
+  // Last saved version of each job, so only changed jobs are written.
+  const saved = useRef(new Map<string, Job>())
+  const trackerRef = useRef<TrackerData | null>(null)
+  trackerRef.current = tracker
 
   const recheckEngine = useCallback(() => {
     setEngine((e) => (e ? { ...e, state: 'checking' } : e))
     void window.shortlist.detectEngine().then(setEngine)
   }, [])
 
+  const reloadTracker = useCallback(async (): Promise<TrackerData> => {
+    const data = await window.shortlist.readTracker()
+    setTracker(data)
+    return data
+  }, [])
+
+  // Settings, engine and run events: once.
   useEffect(() => {
     void window.shortlist.getSettings().then(setSettings)
     void window.shortlist.getWorkspace().then(setWorkspace)
     recheckEngine()
-    // Coming back from the sign-in terminal: check again.
-    window.addEventListener('focus', recheckEngine)
-    const off = window.shortlist.onRunEvent((event) => setJobs((all) => all.map((j) => applyEvent(j, event))))
+    const onFocus = (): void => {
+      recheckEngine()
+      void reloadTracker()
+    }
+    window.addEventListener('focus', onFocus)
+    const off = window.shortlist.onRunEvent((event) => {
+      setJobs((all) => all.map((j) => applyEvent(j, event)))
+      if (event.type !== 'finished' && event.type !== 'failed') return
+      const start = before.current.get(event.runId)
+      before.current.delete(event.runId)
+      void reloadTracker().then((data) => {
+        if (!start) return
+        const key = changedRow(start.rows, data.rows)
+        if (key) setJobs((all) => all.map((j) => (j.id === start.jobId ? { ...j, trackerKey: key } : j)))
+      })
+    })
     return () => {
-      window.removeEventListener('focus', recheckEngine)
+      window.removeEventListener('focus', onFocus)
       off()
     }
-  }, [recheckEngine])
+  }, [recheckEngine, reloadTracker])
+
+  // Saved jobs and the tracker: whenever the folder changes.
+  const wsPath = workspace?.ok ? workspace.path : null
+  useEffect(() => {
+    saved.current.clear()
+    if (!wsPath) {
+      setJobs([])
+      setTracker(null)
+      return
+    }
+    void window.shortlist.listJobs().then((raw) => {
+      const restored = raw.map((r) => restore(r, t('job.stoppedOnClose'))).filter((j): j is Job => j !== null)
+      setJobs(restored)
+    })
+    void reloadTracker()
+  }, [wsPath, reloadTracker, t])
+
+  // Save jobs that changed.
+  useEffect(() => {
+    if (!wsPath) return
+    for (const job of jobs) {
+      if (saved.current.get(job.id) === job) continue
+      saved.current.set(job.id, job)
+      void window.shortlist.saveJob(job)
+    }
+  }, [jobs, wsPath])
 
   useTheme(settings.theme)
 
@@ -54,9 +109,11 @@ export function App() {
   const ready = Boolean(workspace?.ok) && engine?.state === 'ready'
 
   const addJob = async (input: string): Promise<string | null> => {
+    const rows = (await reloadTracker()).rows
     const r = await window.shortlist.startRun({ command: 'apply', input })
     if (!r.ok) return runProblem(r)
-    const id = `job-${++jobCount.current}`
+    const id = crypto.randomUUID()
+    before.current.set(r.runId, { jobId: id, rows })
     setJobs((all) => [newJob(id, input, r.runId), ...all])
     setAdding(false)
     setView({ job: id })
@@ -65,8 +122,10 @@ export function App() {
 
   const reply = async (job: Job, text: string): Promise<string | null> => {
     if (!job.sessionId) return t('run.refused.badInput')
+    const rows = (await reloadTracker()).rows
     const r = await window.shortlist.continueRun({ sessionId: job.sessionId, reply: text })
     if (!r.ok) return runProblem(r)
+    before.current.set(r.runId, { jobId: job.id, rows })
     setJobs((all) => all.map((j) => (j.id === job.id ? continued(j, r.runId) : j)))
     return null
   }
@@ -74,15 +133,34 @@ export function App() {
   const notNow = (job: Job): void =>
     setJobs((all) => all.map((j) => (j.id === job.id ? { ...j, phase: 'notNow' } : j)))
 
+  const remove = (job: Job): void => {
+    void window.shortlist.deleteJob(job.id)
+    saved.current.delete(job.id)
+    setJobs((all) => all.filter((j) => j.id !== job.id))
+    setView('home')
+  }
+
   let screen: ReactElement
   const route: Route = typeof view === 'string' ? view : 'home'
-  if (typeof view !== 'string') {
+  if (typeof view !== 'string' && 'job' in view) {
     const job = jobs.find((j) => j.id === view.job)
+    const row = job?.trackerKey ? (tracker?.rows ?? []).filter((r) => r.matchKey === job.trackerKey).at(-1) : undefined
     screen = job ? (
-      <JobDetail job={job} busy={running} onReply={reply} onNotNow={notNow} onBack={() => setView('home')} />
+      <JobDetail
+        job={job}
+        row={row ?? null}
+        busy={running}
+        onReply={reply}
+        onNotNow={notNow}
+        onRemove={remove}
+        onBack={() => setView('home')}
+      />
     ) : (
       <Placeholder titleKey="nav.home" />
     )
+  } else if (typeof view !== 'string') {
+    const row = tracker?.rows.find((r) => r.id === view.row)
+    screen = row ? <RowDetail row={row} onBack={() => setView('home')} /> : <Placeholder titleKey="nav.home" />
   } else if (view === 'home') {
     screen = (
       <Home
@@ -90,8 +168,10 @@ export function App() {
         engineReady={engine?.state === 'ready'}
         canAdd={ready && !running}
         jobs={jobs}
+        tracker={tracker}
         onAddJob={() => setAdding(true)}
         onOpenJob={(id) => setView({ job: id })}
+        onOpenRow={(id) => setView({ row: id })}
         onNavigate={setView}
       />
     )

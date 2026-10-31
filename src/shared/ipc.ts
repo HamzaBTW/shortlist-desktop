@@ -2,6 +2,7 @@
 // Everything the screens can ask for is listed here; nothing else is exposed.
 
 import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
+import type { TrackerData } from './tracker'
 
 export const THEME_CHOICES = ['system', 'midnight', 'light-relax'] as const
 export type ThemeChoice = (typeof THEME_CHOICES)[number]
@@ -45,6 +46,10 @@ export const Channels = {
   runAnswer: 'run:answer',
   runAnswerQuestion: 'run:answerQuestion',
   runCancel: 'run:cancel',
+  jobsList: 'jobs:list',
+  jobsSave: 'jobs:save',
+  jobsDelete: 'jobs:delete',
+  trackerRead: 'tracker:read',
   /** Main -> screens: progress of the current run. */
   runEvent: 'run:event'
 } as const
@@ -74,6 +79,12 @@ export interface ShortlistApi {
   /** answers: question text -> chosen label(s) or the person's own words. */
   answerQuestion(requestId: string, answers: Record<string, string>): Promise<boolean>
   cancelRun(): Promise<void>
+  /** Jobs saved for the current folder (the app's own store, not the folder). */
+  listJobs(): Promise<unknown[]>
+  saveJob(job: unknown): Promise<boolean>
+  deleteJob(id: string): Promise<boolean>
+  /** The folder's job_search_tracker.csv, read-only. */
+  readTracker(): Promise<TrackerData>
   /** Subscribe to run progress; returns an unsubscribe function. */
   onRunEvent(listener: (event: RunEvent) => void): () => void
 }
