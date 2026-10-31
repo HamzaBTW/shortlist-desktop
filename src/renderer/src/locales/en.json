@@ -40,7 +40,12 @@
     "themeMidnight": "Midnight",
     "themeLight": "Light-relax",
     "about": "About",
-    "version": "{{name}} version {{version}}"
+    "version": "{{name}} version {{version}}",
+    "permissions": "Permissions",
+    "askEveryChange": "Ask before every file change in your folder",
+    "askEveryOff": "Off: commands can change files inside your folder without asking. Your folder's protected files (its code and settings) still ask.",
+    "askEveryOn": "On: every file change shows an Allow once / Deny card.",
+    "alwaysRefused": "Always refused, whatever this switch says: changes outside your folder, uploading to GitHub, deleting folders and admin commands."
   },
   "placeholder": {
     "body": "This screen comes later."
@@ -239,8 +244,9 @@
     "date": "When",
     "note": "Anything to add (optional)",
     "notePlaceholder": "For example: interview with the hiring manager next Tuesday",
-    "how": "Your AI engine records this in your tracker with the job-search commands. It may ask you a question or two.",
+    "how": "Your AI engine records this in your tracker. You can keep using the board; the card moves when it's done.",
     "submit": "Record it",
-    "jobTitle": "{{company}}: {{status}}"
+    "jobTitle": "{{company}}: {{status}}",
+    "updating": "Updating…"
   }
 }

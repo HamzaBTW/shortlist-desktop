@@ -10,9 +10,14 @@ export type ThemeChoice = (typeof THEME_CHOICES)[number]
 export interface Settings {
   theme: ThemeChoice
   guide: boolean
+  /**
+   * Ask before every file change inside the folder. Off: changes inside the
+   * folder go ahead (the folder's own "ask" rules and the app's refusals still apply).
+   */
+  askEveryChange: boolean
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false }
 
 export interface AppInfo {
   name: string
@@ -98,5 +103,6 @@ export function cleanSettings(input: unknown, base: Settings = DEFAULT_SETTINGS)
     out.theme = raw.theme as ThemeChoice
   }
   if (typeof raw.guide === 'boolean') out.guide = raw.guide
+  if (typeof raw.askEveryChange === 'boolean') out.askEveryChange = raw.askEveryChange
   return out
 }

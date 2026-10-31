@@ -35,20 +35,23 @@ interface HomeProps {
 
 interface BoardCardProps {
   card: Card
+  /** A status update running (or waiting on the person) for this card. */
+  update: Job | null
   onOpen: () => void
   canUpdate: boolean
   onUpdate: (target: StatusTarget) => void
+  onOpenUpdate: (id: string) => void
 }
 
 function updateTarget(card: Card): StatusTarget | null {
   if (card.kind === 'row') {
     if (card.column === 'closed' || card.row.status === 'hired') return null
-    return { company: card.row.company, role: card.row.role, column: card.column }
+    return { company: card.row.company, role: card.row.role, column: card.column, matchKey: card.row.matchKey }
   }
   return card.job.phase === 'running' ? null : { company: card.job.title, role: '', column: 'shortlisted' }
 }
 
-function BoardCard({ card, onOpen, canUpdate, onUpdate }: BoardCardProps) {
+function BoardCard({ card, update, onOpen, canUpdate, onUpdate, onOpenUpdate }: BoardCardProps) {
   const { t } = useTranslation()
   const job = card.job
   const needsYou = job ? job.asks.length + job.questions.length > 0 : false
@@ -75,7 +78,10 @@ function BoardCard({ card, onOpen, canUpdate, onUpdate }: BoardCardProps) {
     subtitle = t(`job.phase.${card.job.phase}`)
     score = card.job.score
   }
-  if (needsYou) badge = { tone: 'warning', text: `▲ ${t('job.needsYou')}` }
+  const updateNeedsYou = update ? update.asks.length + update.questions.length > 0 : false
+  if (updateNeedsYou) badge = { tone: 'warning', text: `▲ ${t('job.needsYou')}` }
+  else if (update) badge = { tone: 'info', text: t('outcome.updating') }
+  else if (needsYou) badge = { tone: 'warning', text: `▲ ${t('job.needsYou')}` }
   else if (decide) badge = { tone: 'info', text: t('job.next.decide') }
   else if (running) badge = { tone: 'info', text: t('job.phase.running') }
 
@@ -83,7 +89,7 @@ function BoardCard({ card, onOpen, canUpdate, onUpdate }: BoardCardProps) {
 
   return (
     <div className="card-wrap">
-      <button type="button" className="sl-jobcard job-card" onClick={onOpen}>
+      <button type="button" className="sl-jobcard job-card" onClick={update && updateNeedsYou ? () => onOpenUpdate(update.id) : onOpen}>
         <span className="sl-col job-card__text">
           <span className="sl-jobcard__co">{title}</span>
           {subtitle && <span className="sl-jobcard__role">{subtitle}</span>}
@@ -96,10 +102,10 @@ function BoardCard({ card, onOpen, canUpdate, onUpdate }: BoardCardProps) {
         )}
         {meta && <span className="sl-t-sm">{meta}</span>}
       </button>
-      {target && (
+      {target && !update && (
         <button
           type="button"
-          className="sl-btn sl-btn--quiet sl-btn--sm"
+          className="sl-btn sl-btn--sm card-action"
           disabled={!canUpdate}
           onClick={() => onUpdate(target)}
           aria-label={`${t('outcome.button')}: ${title}`}
@@ -166,6 +172,17 @@ export function Home(props: HomeProps) {
                     card={card}
                     canUpdate={canUpdate}
                     onUpdate={onUpdateStatus}
+                    onOpenUpdate={onOpenJob}
+                    update={
+                      card.kind === 'row'
+                        ? (jobs.find(
+                            (j) =>
+                              j.kind === 'outcome' &&
+                              j.target === card.row.matchKey &&
+                              (j.phase === 'running' || j.asks.length + j.questions.length > 0)
+                          ) ?? null)
+                        : null
+                    }
                     onOpen={() => (card.job ? onOpenJob(card.job.id) : card.kind === 'row' ? onOpenRow(card.row.id) : undefined)}
                   />
                 ))

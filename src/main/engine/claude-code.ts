@@ -134,6 +134,8 @@ export class ClaudeCodeRun {
 
   constructor(
     private readonly workspace: string,
+    /** true: Claude Code's "accept edits" mode (file changes inside the folder go ahead). */
+    private readonly acceptEdits: boolean,
     private readonly emit: Emit
   ) {}
 
@@ -154,7 +156,9 @@ export class ClaudeCodeRun {
       '--input-format', 'stream-json',
       '--verbose',
       '--permission-prompt-tool=stdio',
-      '--permission-mode', 'default',
+      // Never bypassPermissions. acceptEdits only covers file changes inside this folder;
+      // the folder's own "ask" rules still ask, and anything outside comes to judge().
+      '--permission-mode', this.acceptEdits ? 'acceptEdits' : 'default',
       // Only the workspace's own settings, never the person's global ones.
       '--setting-sources', 'project'
     ]

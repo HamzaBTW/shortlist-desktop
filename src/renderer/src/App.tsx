@@ -142,9 +142,9 @@ export function App() {
     before.current.set(r.runId, { jobId: id, rows })
     const job = newJob(id, input, r.runId, Date.now(), 'outcome')
     job.title = t('outcome.jobTitle', { company: target.company, status: t(`outcome.choice.${choice}`) })
+    job.target = target.matchKey
     setJobs((all) => [job, ...all])
     setUpdating(null)
-    setView({ job: id })
     return null
   }
 

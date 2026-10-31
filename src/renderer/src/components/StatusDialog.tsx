@@ -7,6 +7,8 @@ export interface StatusTarget {
   company: string
   role: string
   column: BoardColumn
+  /** The tracker row's company|role, when the card is a row. */
+  matchKey?: string
 }
 
 interface StatusDialogProps {

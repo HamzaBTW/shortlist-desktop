@@ -2,6 +2,7 @@ import type { WebContents } from 'electron'
 import { RUNNABLE_COMMANDS, type ContinueRun, type RunEvent, type StartRun } from '../shared/engine'
 import { Channels, type RunStartResult } from '../shared/ipc'
 import { ClaudeCodeRun } from './engine/claude-code'
+import { loadSettings } from './settings'
 import { currentWorkspace } from './workspace'
 
 // One run at a time: the commands share LaTeX build files in the workspace.
@@ -19,7 +20,7 @@ function begin(target: WebContents, prompt: string, resume?: string): RunStartRe
   if (current?.running) return { ok: false, reason: 'busy' }
   const ws = currentWorkspace()
   if (!ws?.ok) return { ok: false, reason: 'noWorkspace' }
-  const run = new ClaudeCodeRun(ws.path, emitTo(target))
+  const run = new ClaudeCodeRun(ws.path, !loadSettings().askEveryChange, emitTo(target))
   current = run
   run.start(prompt, resume)
   return { ok: true, runId: run.runId }

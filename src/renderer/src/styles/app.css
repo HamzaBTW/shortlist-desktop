@@ -542,3 +542,19 @@ button {
 .outcome-date {
   max-width: 220px;
 }
+
+.card-wrap > .card-action {
+  align-self: stretch;
+  justify-content: center;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.setting-row__label {
+  font: 600 15px/22px var(--font-sans);
+}

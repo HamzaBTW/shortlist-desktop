@@ -33,6 +33,8 @@ export interface Job {
   createdAt: number
   /** 'apply' jobs are board cards; 'outcome' jobs are status updates (shown in the tray and their own page). */
   kind: 'apply' | 'outcome'
+  /** For a status update: the row (company|role) being updated. */
+  target?: string
 }
 
 const TOOL_STEPS: Record<string, StepKey> = {
