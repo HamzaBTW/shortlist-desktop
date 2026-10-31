@@ -4,6 +4,7 @@ import { BOARD_COLUMNS, type TrackerData } from '../../../shared/tracker'
 import { buildBoard, type Card } from '../board'
 import { FitRing } from '../components/FitRing'
 import type { Route } from '../components/Sidebar'
+import type { StatusTarget } from '../components/StatusDialog'
 import type { Job } from '../jobs'
 
 // Each column's dot uses the design system's stage-* colour token.
@@ -26,10 +27,28 @@ interface HomeProps {
   onAddJob: () => void
   onOpenJob: (id: string) => void
   onOpenRow: (id: string) => void
+  /** Status updates run a command, so they need the engine and no other run going. */
+  canUpdate: boolean
+  onUpdateStatus: (target: StatusTarget) => void
   onNavigate: (route: Route) => void
 }
 
-function BoardCard({ card, onOpen }: { card: Card; onOpen: () => void }) {
+interface BoardCardProps {
+  card: Card
+  onOpen: () => void
+  canUpdate: boolean
+  onUpdate: (target: StatusTarget) => void
+}
+
+function updateTarget(card: Card): StatusTarget | null {
+  if (card.kind === 'row') {
+    if (card.column === 'closed' || card.row.status === 'hired') return null
+    return { company: card.row.company, role: card.row.role, column: card.column }
+  }
+  return card.job.phase === 'running' ? null : { company: card.job.title, role: '', column: 'shortlisted' }
+}
+
+function BoardCard({ card, onOpen, canUpdate, onUpdate }: BoardCardProps) {
   const { t } = useTranslation()
   const job = card.job
   const needsYou = job ? job.asks.length + job.questions.length > 0 : false
@@ -60,25 +79,40 @@ function BoardCard({ card, onOpen }: { card: Card; onOpen: () => void }) {
   else if (decide) badge = { tone: 'info', text: t('job.next.decide') }
   else if (running) badge = { tone: 'info', text: t('job.phase.running') }
 
+  const target = updateTarget(card)
+
   return (
-    <button type="button" className="sl-jobcard job-card" onClick={onOpen}>
-      <span className="sl-col job-card__text">
-        <span className="sl-jobcard__co">{title}</span>
-        {subtitle && <span className="sl-jobcard__role">{subtitle}</span>}
-      </span>
-      {(score !== null || badge) && (
-        <span className="job-card__row">
-          {score !== null && <FitRing score={score} size="sm" />}
-          {badge && <span className={`sl-badge sl-badge--${badge.tone}`}>{badge.text}</span>}
+    <div className="card-wrap">
+      <button type="button" className="sl-jobcard job-card" onClick={onOpen}>
+        <span className="sl-col job-card__text">
+          <span className="sl-jobcard__co">{title}</span>
+          {subtitle && <span className="sl-jobcard__role">{subtitle}</span>}
         </span>
+        {(score !== null || badge) && (
+          <span className="job-card__row">
+            {score !== null && <FitRing score={score} size="sm" />}
+            {badge && <span className={`sl-badge sl-badge--${badge.tone}`}>{badge.text}</span>}
+          </span>
+        )}
+        {meta && <span className="sl-t-sm">{meta}</span>}
+      </button>
+      {target && (
+        <button
+          type="button"
+          className="sl-btn sl-btn--quiet sl-btn--sm"
+          disabled={!canUpdate}
+          onClick={() => onUpdate(target)}
+          aria-label={`${t('outcome.button')}: ${title}`}
+        >
+          {t('outcome.button')}
+        </button>
       )}
-      {meta && <span className="sl-t-sm">{meta}</span>}
-    </button>
+    </div>
   )
 }
 
 export function Home(props: HomeProps) {
-  const { workspace, engineReady, canAdd, jobs, tracker, onAddJob, onOpenJob, onOpenRow, onNavigate } = props
+  const { workspace, engineReady, canAdd, jobs, tracker, onAddJob, onOpenJob, onOpenRow, canUpdate, onUpdateStatus, onNavigate } = props
   const { t } = useTranslation()
   const cards = buildBoard(tracker?.rows ?? [], jobs)
 
@@ -130,6 +164,8 @@ export function Home(props: HomeProps) {
                   <BoardCard
                     key={card.key}
                     card={card}
+                    canUpdate={canUpdate}
+                    onUpdate={onUpdateStatus}
                     onOpen={() => (card.job ? onOpenJob(card.job.id) : card.kind === 'row' ? onOpenRow(card.row.id) : undefined)}
                   />
                 ))

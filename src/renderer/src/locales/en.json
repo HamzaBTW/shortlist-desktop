@@ -124,7 +124,8 @@
       "running": "Working…",
       "waiting": "Waiting for you",
       "notNow": "Not now",
-      "failed": "Stopped"
+      "failed": "Stopped",
+      "done": "Done"
     },
     "next": {
       "decide": "Your decision"
@@ -219,5 +220,27 @@
       "tooLarge": "Your tracker is too large to show here.",
       "noHeader": "Your tracker's first line doesn't have the usual column names, so it can't be shown."
     }
+  },
+  "outcome": {
+    "button": "Update status",
+    "title": "Update status",
+    "whatHappened": "What happened?",
+    "closedGroup": "Offer decided or closed",
+    "choice": {
+      "applied": "Applied",
+      "interview": "Interviewing",
+      "offer": "Offer received",
+      "hired": "Accepted the offer (hired)",
+      "rejected": "Not selected",
+      "no_response": "No reply",
+      "withdrawn": "I withdrew",
+      "offer_declined": "Declined the offer"
+    },
+    "date": "When",
+    "note": "Anything to add (optional)",
+    "notePlaceholder": "For example: interview with the hiring manager next Tuesday",
+    "how": "Your AI engine records this in your tracker with the job-search commands. It may ask you a question or two.",
+    "submit": "Record it",
+    "jobTitle": "{{company}}: {{status}}"
   }
 }

@@ -31,6 +31,8 @@ export interface Job {
   /** The tracker row (company|role) this job's run added or changed, once known. */
   trackerKey: string | null
   createdAt: number
+  /** 'apply' jobs are board cards; 'outcome' jobs are status updates (shown in the tray and their own page). */
+  kind: 'apply' | 'outcome'
 }
 
 const TOOL_STEPS: Record<string, StepKey> = {
@@ -85,9 +87,16 @@ export function asksToProceed(text: string): boolean {
   return /proceed with drafting/i.test(text)
 }
 
-export function newJob(id: string, input: string, runId: string, createdAt = Date.now()): Job {
+export function newJob(
+  id: string,
+  input: string,
+  runId: string,
+  createdAt = Date.now(),
+  kind: Job['kind'] = 'apply'
+): Job {
   return {
     id,
+    kind,
     trackerKey: null,
     createdAt,
     input,
@@ -138,7 +147,8 @@ export function applyEvent(job: Job, event: RunEvent): Job {
     case 'denied':
       return { ...job, denied: [...job.denied, { detail: event.detail, reason: event.reason }] }
     case 'finished': {
-      const score = parseScore(event.result)
+      const isApply = job.kind !== 'outcome'
+      const score = isApply ? parseScore(event.result) : null
       return {
         ...job,
         runId: null,
@@ -150,8 +160,8 @@ export function applyEvent(job: Job, event: RunEvent): Job {
         questions: [],
         // Keep the fit-check score once later turns move on to drafting.
         score: score ?? job.score,
-        verdict: parseVerdict(event.result) ?? job.verdict,
-        asksToProceed: asksToProceed(event.result)
+        verdict: (isApply ? parseVerdict(event.result) : null) ?? job.verdict,
+        asksToProceed: isApply && asksToProceed(event.result)
       }
     }
     case 'failed':

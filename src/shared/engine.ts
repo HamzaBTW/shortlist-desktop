@@ -19,12 +19,12 @@ export interface EngineStatus {
 }
 
 /** Commands the screens may start. Anything else is refused by the main process. */
-export const RUNNABLE_COMMANDS = ['apply'] as const
+export const RUNNABLE_COMMANDS = ['apply', 'outcome'] as const
 export type RunnableCommand = (typeof RUNNABLE_COMMANDS)[number]
 
 export interface StartRun {
   command: RunnableCommand
-  /** For /apply: a job link or the posting text. */
+  /** For /apply: a job link or the posting text. For /outcome: company, role and what happened. */
   input: string
 }
 

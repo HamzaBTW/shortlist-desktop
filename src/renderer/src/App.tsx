@@ -5,6 +5,8 @@ import type { EngineStatus } from '../../shared/engine'
 import { DEFAULT_SETTINGS, type RunStartResult, type Settings as SettingsData, type WorkspaceStatus } from '../../shared/ipc'
 import type { TrackerData, TrackerRow } from '../../shared/tracker'
 import { AddJobDialog } from './components/AddJobDialog'
+import { StatusDialog, type StatusTarget } from './components/StatusDialog'
+import { outcomeRequest, type OutcomeChoice } from './outcome'
 import { Sidebar, type Route } from './components/Sidebar'
 import { applyEvent, changedRow, continued, newJob, restore, type Job } from './jobs'
 import { Home } from './screens/Home'
@@ -25,6 +27,7 @@ export function App() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [tracker, setTracker] = useState<TrackerData | null>(null)
   const [adding, setAdding] = useState(false)
+  const [updating, setUpdating] = useState<StatusTarget | null>(null)
 
   // Tracker rows as they were when each run started, and which job each run belongs to.
   const before = useRef(new Map<string, { jobId: string; rows: TrackerRow[] }>())
@@ -62,7 +65,7 @@ export function App() {
       void reloadTracker().then((data) => {
         if (!start) return
         const key = changedRow(start.rows, data.rows)
-        if (key) setJobs((all) => all.map((j) => (j.id === start.jobId ? { ...j, trackerKey: key } : j)))
+        if (key) setJobs((all) => all.map((j) => (j.id === start.jobId && j.kind !== 'outcome' ? { ...j, trackerKey: key } : j)))
       })
     })
     return () => {
@@ -130,6 +133,21 @@ export function App() {
     return null
   }
 
+  const recordStatus = async (target: StatusTarget, choice: OutcomeChoice, date: string, note: string): Promise<string | null> => {
+    const rows = (await reloadTracker()).rows
+    const input = outcomeRequest(target.company, target.role, choice, date, note)
+    const r = await window.shortlist.startRun({ command: 'outcome', input })
+    if (!r.ok) return runProblem(r)
+    const id = crypto.randomUUID()
+    before.current.set(r.runId, { jobId: id, rows })
+    const job = newJob(id, input, r.runId, Date.now(), 'outcome')
+    job.title = t('outcome.jobTitle', { company: target.company, status: t(`outcome.choice.${choice}`) })
+    setJobs((all) => [job, ...all])
+    setUpdating(null)
+    setView({ job: id })
+    return null
+  }
+
   const notNow = (job: Job): void =>
     setJobs((all) => all.map((j) => (j.id === job.id ? { ...j, phase: 'notNow' } : j)))
 
@@ -172,6 +190,8 @@ export function App() {
         onAddJob={() => setAdding(true)}
         onOpenJob={(id) => setView({ job: id })}
         onOpenRow={(id) => setView({ row: id })}
+        canUpdate={ready && !running}
+        onUpdateStatus={setUpdating}
         onNavigate={setView}
       />
     )
@@ -202,6 +222,7 @@ export function App() {
       />
       <main className="app-main">{screen}</main>
       <AddJobDialog open={adding} onClose={() => setAdding(false)} onSubmit={addJob} />
+      <StatusDialog target={updating} onClose={() => setUpdating(null)} onSubmit={recordStatus} />
     </div>
   )
 }

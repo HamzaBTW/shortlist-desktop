@@ -10,6 +10,7 @@ export type Card =
 
 export function buildBoard(rows: TrackerRow[], jobs: Job[]): Card[] {
   const byKey = new Map<string, Job>()
+  jobs = jobs.filter((j) => j.kind !== 'outcome')
   for (const j of jobs) {
     if (!j.trackerKey) continue
     const prev = byKey.get(j.trackerKey)

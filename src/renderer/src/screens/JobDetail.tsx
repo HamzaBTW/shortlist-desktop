@@ -39,7 +39,7 @@ export function JobDetail({ job, row, busy, onReply, onNotNow, onRemove, onBack 
         <div className="sl-col">
           <h1 className="t-display-lg job-head__title">{job.title}</h1>
           <span className={`sl-badge ${running ? 'sl-badge--info' : job.phase === 'failed' ? 'sl-badge--danger' : 'sl-badge--muted'}`}>
-            {t(`job.phase.${job.phase}`)}
+            {t(`job.phase.${job.kind === 'outcome' && job.phase === 'waiting' ? 'done' : job.phase}`)}
           </span>
           {row && (
             <span className="sl-t-sm">

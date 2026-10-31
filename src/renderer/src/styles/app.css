@@ -524,3 +524,21 @@ button {
   flex: 0 1 auto;
   min-width: 0;
 }
+
+.card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.card-wrap > .sl-btn {
+  align-self: flex-start;
+}
+
+.outcome-group {
+  margin-block-start: var(--space-2);
+}
+
+.outcome-date {
+  max-width: 220px;
+}
