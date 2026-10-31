@@ -1,8 +1,9 @@
-import { app, ipcMain, nativeTheme, type IpcMainInvokeEvent } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeTheme, type IpcMainInvokeEvent } from 'electron'
 import { APP_NAME } from '../shared/app-info'
 import { Channels, type AppInfo, type Settings } from '../shared/ipc'
 import { isAppUrl } from './security'
 import { loadSettings, saveSettings } from './settings'
+import { chooseWorkspace, currentWorkspace, openWorkspace } from './workspace'
 
 /** Only the app's own screens may call in; anything else is refused. */
 function handle<T>(channel: string, fn: (event: IpcMainInvokeEvent, ...args: unknown[]) => T): void {
@@ -35,4 +36,8 @@ export function registerIpc(): void {
     applyNativeTheme(next)
     return next
   })
+
+  handle(Channels.workspaceGet, () => currentWorkspace())
+  handle(Channels.workspaceChoose, (event) => chooseWorkspace(BrowserWindow.fromWebContents(event.sender)))
+  handle(Channels.workspaceOpen, () => openWorkspace())
 }

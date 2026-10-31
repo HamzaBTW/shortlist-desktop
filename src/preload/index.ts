@@ -6,7 +6,10 @@ import { Channels, type ShortlistApi } from '../shared/ipc'
 const api: ShortlistApi = {
   appInfo: () => ipcRenderer.invoke(Channels.appInfo),
   getSettings: () => ipcRenderer.invoke(Channels.settingsGet),
-  setSettings: (patch) => ipcRenderer.invoke(Channels.settingsSet, patch)
+  setSettings: (patch) => ipcRenderer.invoke(Channels.settingsSet, patch),
+  getWorkspace: () => ipcRenderer.invoke(Channels.workspaceGet),
+  chooseWorkspace: () => ipcRenderer.invoke(Channels.workspaceChoose),
+  openWorkspace: () => ipcRenderer.invoke(Channels.workspaceOpen)
 }
 
 contextBridge.exposeInMainWorld('shortlist', api)

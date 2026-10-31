@@ -17,16 +17,40 @@ export interface AppInfo {
   platform: 'win32' | 'darwin' | 'linux' | 'other'
 }
 
+/** Why a folder is not usable as the workspace. */
+export type WorkspaceProblem = 'missing' | 'notFolder' | 'noClaudeMd' | 'noCommands'
+
+export interface WorkspaceStatus {
+  path: string
+  ok: boolean
+  problems: WorkspaceProblem[]
+  /** CLAUDE.md no longer holds the template's placeholders. */
+  profileFilled: boolean
+  hasTracker: boolean
+}
+
 export const Channels = {
   appInfo: 'app:info',
   settingsGet: 'settings:get',
-  settingsSet: 'settings:set'
+  settingsSet: 'settings:set',
+  workspaceGet: 'workspace:get',
+  workspaceChoose: 'workspace:choose',
+  workspaceOpen: 'workspace:open'
 } as const
 
 export interface ShortlistApi {
   appInfo(): Promise<AppInfo>
   getSettings(): Promise<Settings>
   setSettings(patch: Partial<Settings>): Promise<Settings>
+  /** The saved folder, checked again now; null if none chosen yet. */
+  getWorkspace(): Promise<WorkspaceStatus | null>
+  /**
+   * Opens the system folder dialog. The folder is saved only if it passes the check.
+   * Returns null if the person cancels. The screens never pass a path in.
+   */
+  chooseWorkspace(): Promise<WorkspaceStatus | null>
+  /** Shows the saved folder in Explorer / Finder. */
+  openWorkspace(): Promise<void>
 }
 
 /** Keeps only known keys with valid values; anything else is dropped. */

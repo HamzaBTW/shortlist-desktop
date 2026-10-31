@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next'
+import type { WorkspaceStatus } from '../../../shared/ipc'
+import type { Route } from '../components/Sidebar'
 
 // Board columns and the stage token that colours each column's dot.
 // Which tracker statuses land in which column: see the design system's Decisions page.
@@ -10,7 +12,12 @@ const COLUMNS = [
   { id: 'closed', dot: 'var(--stage-rejected)' }
 ] as const
 
-export function Home() {
+interface HomeProps {
+  workspace: WorkspaceStatus | null
+  onNavigate: (route: Route) => void
+}
+
+export function Home({ workspace, onNavigate }: HomeProps) {
   const { t } = useTranslation()
 
   return (
@@ -26,7 +33,12 @@ export function Home() {
           </button>
         </div>
       </header>
-      <p className="sl-t-sm">{t('home.notReady')}</p>
+      <p className="sl-t-sm">
+        {t(workspace?.ok ? 'home.needEngine' : 'home.needFolder')}{' '}
+        <button type="button" className="sl-link" onClick={() => onNavigate('settings')}>
+          {t('home.openSettings')}
+        </button>
+      </p>
 
       <div className="board">
         {COLUMNS.map((col) => (

@@ -19,8 +19,10 @@
     "title": "Pipeline",
     "findJobs": "Find new jobs",
     "addJob": "Add a job",
-    "notReady": "Choose your folder and AI engine in Settings to get started.",
-    "emptyColumn": "Nothing here yet"
+    "emptyColumn": "Nothing here yet",
+    "needFolder": "Start by choosing your ai-job-search folder.",
+    "needEngine": "Your folder is ready. Next, connect your AI engine.",
+    "openSettings": "Go to Settings"
   },
   "stage": {
     "shortlisted": "Shortlisted",
@@ -36,7 +38,6 @@
     "themeSystem": "Follow system",
     "themeMidnight": "Midnight",
     "themeLight": "Light-relax",
-    "workspace": "Your folder",
     "engine": "AI engine",
     "comingNext": "Coming in the next step.",
     "about": "About",
@@ -44,5 +45,26 @@
   },
   "placeholder": {
     "body": "This screen comes later."
+  },
+  "workspace": {
+    "title": "Your folder",
+    "intro": "Pick the copy of ai-job-search already on this computer. Your files stay there; nothing is uploaded to GitHub or the cloud.",
+    "choose": "Choose folder",
+    "chooseAnother": "Choose another folder",
+    "open": "Open folder",
+    "rejected": "This folder doesn't look like ai-job-search, so it wasn't saved.",
+    "problem": {
+      "missing": "The folder can't be found. It may have been moved or renamed.",
+      "notFolder": "This is a file, not a folder.",
+      "noClaudeMd": "No CLAUDE.md in this folder.",
+      "noCommands": "The job-search commands are missing (.claude/commands)."
+    },
+    "ok": {
+      "commands": "Job-search commands found",
+      "profile": "Your profile is filled in",
+      "noProfile": "Your profile isn't filled in yet",
+      "tracker": "Application tracker found",
+      "noTracker": "No applications tracked yet"
+    }
   }
 }

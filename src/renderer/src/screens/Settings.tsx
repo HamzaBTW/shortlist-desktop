@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AppInfo, Settings as SettingsData, ThemeChoice } from '../../../shared/ipc'
+import type { AppInfo, Settings as SettingsData, ThemeChoice, WorkspaceStatus } from '../../../shared/ipc'
+import { WorkspacePanel } from '../components/WorkspacePanel'
 
 const THEMES: { id: ThemeChoice; key: string }[] = [
   { id: 'midnight', key: 'settings.themeMidnight' },
@@ -11,9 +12,11 @@ const THEMES: { id: ThemeChoice; key: string }[] = [
 interface SettingsProps {
   settings: SettingsData
   onChange: (patch: Partial<SettingsData>) => void
+  workspace: WorkspaceStatus | null
+  onWorkspace: (status: WorkspaceStatus) => void
 }
 
-export function Settings({ settings, onChange }: SettingsProps) {
+export function Settings({ settings, onChange, workspace, onWorkspace }: SettingsProps) {
   const { t } = useTranslation()
   const [info, setInfo] = useState<AppInfo | null>(null)
 
@@ -26,6 +29,8 @@ export function Settings({ settings, onChange }: SettingsProps) {
       <header className="screen__head">
         <h1 className="t-display-lg">{t('settings.title')}</h1>
       </header>
+
+      <WorkspacePanel workspace={workspace} onChosen={onWorkspace} />
 
       <section className="sl-tile panel">
         <h2 className="sl-t-title">{t('settings.appearance')}</h2>
@@ -44,11 +49,6 @@ export function Settings({ settings, onChange }: SettingsProps) {
             </label>
           ))}
         </fieldset>
-      </section>
-
-      <section className="sl-tile panel">
-        <h2 className="sl-t-title">{t('settings.workspace')}</h2>
-        <p className="sl-t-sm">{t('settings.comingNext')}</p>
       </section>
 
       <section className="sl-tile panel">
