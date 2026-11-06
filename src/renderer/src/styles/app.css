@@ -670,3 +670,32 @@ button {
 .mix__count {
   font-family: var(--font-mono);
 }
+
+.missing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 880px;
+}
+
+.missing .missing__list {
+  gap: var(--space-2);
+}
+
+.missing__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.missing__text {
+  min-width: 0;
+}
+
+.freed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 880px;
+}

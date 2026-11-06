@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { EngineStatus } from '../../shared/engine'
 import { DEFAULT_SETTINGS, type RunStartResult, type Settings as SettingsData, type WorkspaceStatus } from '../../shared/ipc'
-import type { Pick, RankedJob, SearchData } from '../../shared/search'
+import type { IncompleteJob, Pick, RankedJob, SearchData } from '../../shared/search'
 import type { TrackerData, TrackerRow } from '../../shared/tracker'
 import { AddJobDialog } from './components/AddJobDialog'
 import { StatusDialog, type StatusTarget } from './components/StatusDialog'
@@ -16,7 +16,7 @@ import { Placeholder } from './screens/Placeholder'
 import { RowDetail } from './screens/RowDetail'
 import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
-import { slotsArg } from '../../shared/slots'
+import { slotsArg, topUpSlots, type Freed, type Source, type SourceLabel } from '../../shared/slots'
 import { useTheme } from './useTheme'
 
 export type View = Route | { job: string } | { row: string }
@@ -35,6 +35,10 @@ export function App() {
   const [picks, setPicks] = useState<Record<string, Pick>>({})
   // Find new jobs: /scrape runs first; when it finishes, /rank starts for the same job.
   const scrapeRuns = useRef(new Map<string, string>())
+  // Closing postings: which keys each /scrape drop run was asked to close, and what that frees.
+  const closeRuns = useRef(new Map<string, { keys: string[]; sources: Map<string, SourceLabel> }>())
+  const [closing, setClosing] = useState<string[]>([])
+  const [freed, setFreed] = useState<Freed>({})
 
   // Tracker rows as they were when each run started, and which job each run belongs to.
   const before = useRef(new Map<string, { jobId: string; rows: TrackerRow[] }>())
@@ -54,8 +58,10 @@ export function App() {
     return data
   }, [])
 
-  const reloadSearch = useCallback(async (): Promise<void> => {
-    setSearch(await window.shortlist.readSearch())
+  const reloadSearch = useCallback(async (): Promise<SearchData> => {
+    const data = await window.shortlist.readSearch()
+    setSearch(data)
+    return data
   }, [])
 
   // Settings, engine and run events: once.
@@ -72,7 +78,22 @@ export function App() {
     const off = window.shortlist.onRunEvent((event) => {
       setJobs((all) => all.map((j) => applyEvent(j, event)))
       if (event.type !== 'finished' && event.type !== 'failed') return
-      void reloadSearch()
+      const closed = closeRuns.current.get(event.runId)
+      closeRuns.current.delete(event.runId)
+      void reloadSearch().then((data) => {
+        if (!closed) return
+        setClosing((c) => c.filter((k) => !closed.keys.includes(k)))
+        // Only postings that really left the list free a slot.
+        const gone = closed.keys.filter((k) => !data.incomplete.some((i) => i.key === k))
+        setFreed((f) => {
+          const next = { ...f }
+          for (const k of gone) {
+            const source = closed.sources.get(k)
+            if (source && source !== 'other') next[source as Source] = (next[source as Source] ?? 0) + 1
+          }
+          return next
+        })
+      })
       const searchJob = scrapeRuns.current.get(event.runId)
       scrapeRuns.current.delete(event.runId)
       if (searchJob && event.type === 'finished' && !event.isError) {
@@ -173,15 +194,33 @@ export function App() {
     return null
   }
 
-  const findJobs = async (): Promise<void> => {
+  const findJobs = async (input = slotsArg(settings.slots)): Promise<void> => {
     setView('search')
-    const r = await window.shortlist.startRun({ command: 'scrape', input: slotsArg(settings.slots) })
+    setFreed({})
+    const r = await window.shortlist.startRun({ command: 'scrape', input })
     if (!r.ok) return
     const id = crypto.randomUUID()
     scrapeRuns.current.set(r.runId, id)
     const job = { ...newJob(id, '/scrape', r.runId, Date.now(), 'search'), stage: 'scrape' as const }
     job.title = t('search.jobTitle')
     setJobs((all) => [job, ...all])
+  }
+
+  /** The X on a posting with missing details: /scrape drop <key>, run through the engine. */
+  const closePosting = async (item: IncompleteJob): Promise<void> => {
+    const r = await window.shortlist.startRun({ command: 'scrape', input: `drop ${item.key}` })
+    if (!r.ok) return
+    closeRuns.current.set(r.runId, { keys: [item.key], sources: new Map([[item.key, item.sourceLabel]]) })
+    setClosing((c) => [...c, item.key])
+    const job = { ...newJob(crypto.randomUUID(), `/scrape drop ${item.key}`, r.runId, Date.now(), 'search'), stage: 'close' as const }
+    job.title = t('search.missing.jobTitle')
+    setJobs((all) => [job, ...all])
+  }
+
+  /** After closing: search again with the freed slots, either given to other sources or kept on the same ones. */
+  const refill = (mode: 'share' | 'keep'): void => {
+    const slots = topUpSlots(freed, settings.slots, mode)
+    if (slots) void findJobs(slotsArg(slots))
   }
 
   const rankRest = async (): Promise<void> => {
@@ -281,6 +320,11 @@ export function App() {
         canRun={ready && !running}
         search={search}
         slots={settings.slots}
+        closing={closing}
+        freed={freed}
+        onClose={(i) => void closePosting(i)}
+        onRefill={refill}
+        onDismissFreed={() => setFreed({})}
         picks={picks}
         job={jobs.filter((j) => j.kind === 'search').sort((a, b) => b.createdAt - a.createdAt)[0] ?? null}
         started={new Set(jobs.map((j) => j.rankedKey).filter((k): k is string => Boolean(k)))}

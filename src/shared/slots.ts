@@ -41,3 +41,27 @@ const DROP_INPUT = /^drop [A-Za-z0-9._-]{1,300}(?:,[A-Za-z0-9._-]{1,300}){0,49}$
 export function isScrapeInput(input: string): boolean {
   return input === '' || SLOTS_INPUT.test(input) || DROP_INPUT.test(input)
 }
+
+/** Slots freed by closing postings, per source. */
+export type Freed = Partial<Record<Source, number>>
+
+export const freedTotal = (freed: Freed): number => SOURCES.reduce((n, s) => n + (freed[s] ?? 0), 0)
+
+/**
+ * The shares for a top-up search after postings were closed.
+ * 'share': the freed slots go to the sources that lost none (spread evenly, in order); null if none can take them.
+ * 'keep': each source that lost postings searches again for as many as it lost; the others are left out.
+ */
+export function topUpSlots(freed: Freed, slots: Slots, mode: 'share' | 'keep'): Slots | null {
+  const total = freedTotal(freed)
+  if (total <= 0) return null
+  const out: Slots = { linkedin: 0, freehire: 0, indeed: 0, careers: 0 }
+  if (mode === 'keep') {
+    for (const s of SOURCES) out[s] = freed[s] ?? 0
+    return out
+  }
+  const targets = SOURCES.filter((s) => slots[s] > 0 && !(freed[s] ?? 0))
+  if (targets.length === 0) return null
+  for (let i = 0; i < total; i++) out[targets[i % targets.length]!]++
+  return out
+}

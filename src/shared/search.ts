@@ -3,6 +3,19 @@
 
 import type { SourceLabel } from './slots.ts'
 
+export const DETAILS = ['company', 'location', 'description', 'apply_link'] as const
+export type Detail = (typeof DETAILS)[number]
+
+/** A found posting that lacks details the person needs to decide (status new, `missing_details` set by /scrape). */
+export interface IncompleteJob {
+  key: string
+  title: string
+  company: string
+  portal: string
+  sourceLabel: SourceLabel
+  missing: Detail[]
+}
+
 export interface RankedJob {
   /** The framework's own key for the posting (tools/job_key.py). */
   key: string
@@ -42,6 +55,8 @@ export interface SearchData {
   perSource: Record<SourceLabel, number>
   /** The date of that search, YYYY-MM-DD. */
   searchedOn: string | null
+  /** Postings missing details, least complete first. Only these can be closed. */
+  incomplete: IncompleteJob[]
   error?: 'unreadable' | 'tooLarge'
 }
 

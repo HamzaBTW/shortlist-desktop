@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Pick, RankedJob, SearchData } from '../../../shared/search'
+import type { IncompleteJob, Pick, RankedJob, SearchData } from '../../../shared/search'
 import { PermissionCard, QuestionCard } from '../components/AskCards'
 import { FitRing } from '../components/FitRing'
 import { Markdown } from '../components/Markdown'
 import type { Job } from '../jobs'
-import { SOURCES, type Slots } from '../../../shared/slots'
+import { freedTotal, SOURCES, topUpSlots, type Freed, type Slots } from '../../../shared/slots'
 
 interface SearchProps {
   /** Folder and engine ready, and no other job running. */
@@ -13,6 +13,13 @@ interface SearchProps {
   search: SearchData | null
   /** The shares set in Settings. */
   slots: Slots
+  /** Keys of postings being closed right now. */
+  closing: string[]
+  /** Slots freed by postings closed since the last search. */
+  freed: Freed
+  onClose: (item: IncompleteJob) => void
+  onRefill: (mode: 'share' | 'keep') => void
+  onDismissFreed: () => void
   picks: Record<string, Pick>
   /** The latest Find new jobs run, if any. */
   job: Job | null
@@ -157,7 +164,91 @@ function SourceCounts({ search, slots }: { search: SearchData; slots: Slots }) {
   )
 }
 
-export function Search({ canRun, search, slots, picks, job, started, onFind, onRankRest, onCheck, onPick }: SearchProps) {
+function MissingDetails(props: {
+  items: IncompleteJob[]
+  closing: string[]
+  canRun: boolean
+  onClose: (item: IncompleteJob) => void
+}) {
+  const { items, closing, canRun, onClose } = props
+  const { t } = useTranslation()
+  if (items.length === 0) return null
+  return (
+    <section className="missing" aria-labelledby="missing-title">
+      <h2 id="missing-title" className="sl-t-title">
+        {t('search.missing.title')}
+      </h2>
+      <p className="sl-t-sm">{t('search.missing.intro', { count: items.length })}</p>
+      <ul className="plain missing__list">
+        {items.map((i) => {
+          const busy = closing.includes(i.key)
+          const title = i.title || t('search.missing.untitled')
+          return (
+            <li key={i.key} className="sl-tile missing__row">
+              <div className="sl-col missing__text">
+                <span className="sl-t-title">{title}</span>
+                <span className="sl-t-sm">
+                  {i.company || t('search.missing.noCompany')} ·{' '}
+                  {i.sourceLabel === 'other' ? i.portal || t('source.other') : t(`source.${i.sourceLabel}`)}
+                </span>
+                <span className="sl-t-sm">
+                  {t('search.missing.lacks', { details: i.missing.map((d) => t(`search.missing.detail.${d}`)).join(', ') })}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="sl-btn sl-btn--quiet sl-btn--sm missing__x"
+                aria-label={t('search.missing.close', { title })}
+                title={t('search.missing.close', { title })}
+                disabled={!canRun || busy}
+                onClick={() => onClose(i)}
+              >
+                {busy ? t('search.missing.closing') : '✕'}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+function FreedSlots(props: {
+  freed: Freed
+  slots: Slots
+  canRun: boolean
+  onRefill: (mode: 'share' | 'keep') => void
+  onDismiss: () => void
+}) {
+  const { freed, slots, canRun, onRefill, onDismiss } = props
+  const { t } = useTranslation()
+  const count = freedTotal(freed)
+  if (count === 0) return null
+  const lost = SOURCES.filter((s) => (freed[s] ?? 0) > 0)
+  const summary = lost.map((s) => `${t(`source.${s}`)} ${freed[s]}`).join(', ')
+  const canShare = topUpSlots(freed, slots, 'share') !== null
+  return (
+    <section className="sl-tile freed" role="status">
+      <span className="sl-t-title">{t('search.freed.title', { count, summary })}</span>
+      <p className="sl-t-sm">{t('search.freed.ask')}</p>
+      {lost.includes('indeed') && <p className="sl-t-sm">{t('search.freed.indeedNote')}</p>}
+      <div className="screen__actions">
+        <button type="button" className="sl-btn sl-btn--primary sl-btn--sm" disabled={!canRun || !canShare} onClick={() => onRefill('share')}>
+          {t('search.freed.share')}
+        </button>
+        <button type="button" className="sl-btn sl-btn--sm" disabled={!canRun} onClick={() => onRefill('keep')}>
+          {t('search.freed.keep', { sources: lost.map((s) => t(`source.${s}`)).join(', ') })}
+        </button>
+        <button type="button" className="sl-btn sl-btn--quiet sl-btn--sm" onClick={onDismiss}>
+          {t('search.freed.later')}
+        </button>
+      </div>
+      {!canShare && <span className="sl-t-sm">{t('search.freed.noTargets')}</span>}
+    </section>
+  )
+}
+
+export function Search({ canRun, search, slots, closing, freed, onClose, onRefill, onDismissFreed, picks, job, started, onFind, onRankRest, onCheck, onPick }: SearchProps) {
   const { t } = useTranslation()
   const [showHidden, setShowHidden] = useState(false)
   const running = job?.phase === 'running'
@@ -200,6 +291,7 @@ export function Search({ canRun, search, slots, picks, job, started, onFind, onR
       {running && job && (
         <section className="sl-job job-progress" aria-live="polite">
           <span className="sl-t-label">{t(`search.stage.${job.stage ?? 'scrape'}`)}</span>
+          {job.stage !== 'close' && (
           <ul className="sl-steps">
             <li className={job.stage === 'rank' ? 'is-done' : 'is-active'}>
               <span className="g" aria-hidden="true">
@@ -214,6 +306,7 @@ export function Search({ canRun, search, slots, picks, job, started, onFind, onR
               {t('search.step.rank')}
             </li>
           </ul>
+          )}
           <span className="sl-t-sm">{t(`step.${job.steps[job.steps.length - 1] ?? 'start'}`)}</span>
           <div className="screen__actions">
             <button type="button" className="sl-btn sl-btn--sm" onClick={() => void window.shortlist.cancelRun()}>
@@ -253,6 +346,9 @@ export function Search({ canRun, search, slots, picks, job, started, onFind, onR
           />
         ))}
       </div>
+
+      <MissingDetails items={search?.incomplete ?? []} closing={closing} canRun={canRun} onClose={onClose} />
+      <FreedSlots freed={freed} slots={slots} canRun={canRun} onRefill={onRefill} onDismiss={onDismissFreed} />
 
       {hidden.length > 0 && (
         <button type="button" className="sl-link" onClick={() => setShowHidden((s) => !s)}>

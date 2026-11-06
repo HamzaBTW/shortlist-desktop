@@ -95,3 +95,50 @@ test('source mix: no search yet means no counts', () => {
   assert.equal(data.searchedOn, null)
   assert.deepEqual(data.perSource, { linkedin: 0, freehire: 0, indeed: 0, careers: 0, other: 0 })
 })
+
+import { topUpSlots } from '../src/shared/slots.ts'
+
+const GAPS = JSON.stringify({
+  seen: {
+    one: { title: 'Planner', company: 'Lambda', portal: 'freehire', status: 'new', missing_details: ['location'] },
+    three: { title: 'Junior', company: '', portal: 'linkedin', status: 'new', missing_details: ['company', 'location', 'description'] },
+    two: { title: 'Clerk', company: 'Mu', portal: 'careers: mu.example', status: 'new', missing_details: ['description', 'location'] },
+    twoIndeed: { title: 'Analyst', company: 'Kappa', portal: 'indeed', status: 'new', missing_details: ['apply_link', 'description'] },
+    closed: { title: 'Old', company: 'Z', portal: 'linkedin', status: 'skipped', dropped: true, missing_details: ['company'] },
+    ranked: { title: 'R', company: 'R', portal: 'linkedin', status: 'ranked', rank_score: 60, missing_details: ['location'] },
+    clean: { title: 'Fine', company: 'F', portal: 'linkedin', status: 'new' },
+    junk: { title: 'J', company: 'J', portal: 'linkedin', status: 'new', missing_details: ['colour', 7] }
+  }
+})
+
+test('missing details: least complete first, only open new postings, unknown values ignored', () => {
+  const data = parseSeen(GAPS, new Set())
+  assert.deepEqual(data.incomplete.map((i) => i.key), ['three', 'twoIndeed', 'two', 'one'])
+  assert.deepEqual(data.incomplete[0]!.missing, ['company', 'location', 'description'])
+  assert.equal(data.incomplete[0]!.sourceLabel, 'linkedin')
+  assert.equal(data.incomplete[1]!.sourceLabel, 'indeed')
+})
+
+test('a closed posting (skipped by /scrape drop) is gone from the list', () => {
+  const after = JSON.parse(GAPS) as { seen: Record<string, Record<string, unknown>> }
+  Object.assign(after.seen['three']!, { status: 'skipped', dropped: true })
+  assert.ok(!parseSeen(JSON.stringify(after), new Set()).incomplete.some((i) => i.key === 'three'))
+})
+
+const S = { linkedin: 5, freehire: 5, indeed: 5, careers: 5 }
+
+test('top-up: freed slots go to the sources that lost none, evenly', () => {
+  assert.deepEqual(topUpSlots({ linkedin: 3 }, S, 'share'), { linkedin: 0, freehire: 1, indeed: 1, careers: 1 })
+  assert.deepEqual(topUpSlots({ indeed: 1 }, S, 'share'), { linkedin: 1, freehire: 0, indeed: 0, careers: 0 })
+  assert.deepEqual(topUpSlots({ linkedin: 2 }, { ...S, careers: 0 }, 'share'), { linkedin: 0, freehire: 1, indeed: 1, careers: 0 })
+})
+
+test('top-up: nobody to give to, or nothing freed, means no search', () => {
+  assert.equal(topUpSlots({ linkedin: 1 }, { linkedin: 5, freehire: 0, indeed: 0, careers: 0 }, 'share'), null)
+  assert.equal(topUpSlots({}, S, 'share'), null)
+  assert.equal(topUpSlots({}, S, 'keep'), null)
+})
+
+test('top-up: keep fills the same source again, as many as were closed', () => {
+  assert.deepEqual(topUpSlots({ indeed: 2, careers: 1 }, S, 'keep'), { linkedin: 0, freehire: 0, indeed: 2, careers: 1 })
+})

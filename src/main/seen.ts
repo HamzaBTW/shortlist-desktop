@@ -1,6 +1,6 @@
 import { readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
-import type { RankedJob, SearchData } from '../shared/search.ts'
+import { DETAILS, type Detail, type IncompleteJob, type RankedJob, type SearchData } from '../shared/search.ts'
 import { sourceOf, type SourceLabel } from '../shared/slots.ts'
 import { matchKey } from '../shared/tracker.ts'
 
@@ -19,6 +19,7 @@ const empty = (found: boolean, error?: SearchData['error']): SearchData => ({
   lastRanked: null,
   perSource: noCounts(),
   searchedOn: null,
+  incomplete: [],
   ...(error ? { error } : {})
 })
 export const emptySearch = (): SearchData => empty(false)
@@ -58,6 +59,7 @@ export function parseSeen(text: string, trackerKeys: Set<string>): SearchData {
   const ranked: RankedJob[] = []
   let waiting = 0
   let lastRanked: string | null = null
+  const incomplete: IncompleteJob[] = []
   const stamped: { source: SourceLabel; firstSeen: string }[] = []
 
   for (const [key, raw] of Object.entries(seen)) {
@@ -69,6 +71,13 @@ export function parseSeen(text: string, trackerKeys: Set<string>): SearchData {
     }
     if (status === 'new' || status === 'unreachable') {
       waiting++
+      const missing = Array.isArray(e['missing_details'])
+        ? DETAILS.filter((d): d is Detail => (e['missing_details'] as unknown[]).includes(d))
+        : []
+      if (status === 'new' && e['dropped'] !== true && missing.length > 0) {
+        const portal = str(e['portal'], 80)
+        incomplete.push({ key: key.slice(0, 300), title: str(e['title'], 200), company: str(e['company'], 200), portal, sourceLabel: sourceOf(portal), missing })
+      }
       continue
     }
     if (status !== 'ranked') continue
@@ -103,5 +112,7 @@ export function parseSeen(text: string, trackerKeys: Set<string>): SearchData {
   const searchedOn = stamped.reduce<string | null>((max, x) => (x.firstSeen && (!max || x.firstSeen > max) ? x.firstSeen : max), null)
   const perSource = noCounts()
   for (const x of stamped) if (searchedOn && x.firstSeen === searchedOn) perSource[x.source]++
-  return { found: true, ranked, waiting, lastRanked, perSource, searchedOn }
+  const order = (j: IncompleteJob): number => ['linkedin', 'freehire', 'indeed', 'careers', 'other'].indexOf(j.sourceLabel)
+  incomplete.sort((a, b) => b.missing.length - a.missing.length || order(a) - order(b) || a.title.localeCompare(b.title))
+  return { found: true, ranked, waiting, lastRanked, perSource, searchedOn, incomplete }
 }

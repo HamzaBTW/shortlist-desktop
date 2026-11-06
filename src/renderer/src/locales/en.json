@@ -263,7 +263,8 @@
     "rankRest": "Rank {{count}} more",
     "stage": {
       "scrape": "Searching your job sites",
-      "rank": "Ranking what it found"
+      "rank": "Ranking what it found",
+      "close": "Closing the posting"
     },
     "step": {
       "scrape": "Search job sites",
@@ -292,6 +293,33 @@
       "title": "Postings per source, search of {{date}}",
       "off": "off",
       "none": "{{source}} returned nothing"
+    },
+    "missing": {
+      "title": "Missing details",
+      "intro_other": "{{count}} postings lack details that help you decide, least complete first. Close the ones you don't want; they won't come back.",
+      "intro_one": "1 posting lacks details that help you decide. Close it if you don't want it; it won't come back.",
+      "untitled": "Untitled posting",
+      "noCompany": "no company named",
+      "lacks": "Missing: {{details}}",
+      "detail": {
+        "company": "company",
+        "location": "location",
+        "description": "description",
+        "apply_link": "apply link"
+      },
+      "close": "Close {{title}}",
+      "closing": "Closing…",
+      "jobTitle": "Closing a posting"
+    },
+    "freed": {
+      "title_other": "Closed {{count}} postings, {{summary}}",
+      "title_one": "Closed 1 posting, {{summary}}",
+      "ask": "The freed search slots are open. What next?",
+      "share": "Give the slots to the other sources",
+      "keep": "Keep filling {{sources}}",
+      "indeedNote": "Indeed can't load more results. Searching it again repeats the search and may bring different postings, or none.",
+      "noTargets": "No other source has slots to give.",
+      "later": "Not now"
     }
   },
   "source": {
