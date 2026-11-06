@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { AppInfo, Settings as SettingsData, ThemeChoice, WorkspaceStatus } from '../../../shared/ipc'
 import type { EngineStatus } from '../../../shared/engine'
 import { EnginePanel } from '../components/EnginePanel'
+import { SOURCES, MAX_SLOT, type Source } from '../../../shared/slots'
 import { WorkspacePanel } from '../components/WorkspacePanel'
 
 const THEMES: { id: ThemeChoice; key: string }[] = [
@@ -18,6 +19,34 @@ interface SettingsProps {
   onWorkspace: (status: WorkspaceStatus) => void
   engine: EngineStatus | null
   onRecheckEngine: () => void
+}
+
+function SlotField({ source, value, onCommit }: { source: Source; value: number; onCommit: (n: number) => void }) {
+  const { t } = useTranslation()
+  const [text, setText] = useState(String(value))
+  useEffect(() => setText(String(value)), [value])
+  const valid = /^\d{1,3}$/.test(text) && Number(text) <= MAX_SLOT
+  return (
+    <label className="slot-field">
+      <span className="sl-t-label">{t(`source.${source}`)}</span>
+      <input
+        type="number"
+        inputMode="numeric"
+        className="field"
+        min={0}
+        max={MAX_SLOT}
+        step={1}
+        value={text}
+        aria-invalid={!valid}
+        onChange={(e) => {
+          setText(e.target.value)
+          if (/^\d{1,3}$/.test(e.target.value) && Number(e.target.value) <= MAX_SLOT) onCommit(Number(e.target.value))
+        }}
+        onBlur={() => !valid && setText(String(value))}
+      />
+      {!valid && <span className="sl-t-sm" role="alert">{t('settings.slotsInvalid')}</span>}
+    </label>
+  )
 }
 
 export function Settings({ settings, onChange, workspace, onWorkspace, engine, onRecheckEngine }: SettingsProps) {
@@ -75,6 +104,23 @@ export function Settings({ settings, onChange, workspace, onWorkspace, engine, o
           />
         </div>
         <p className="sl-t-sm">{t('settings.alwaysRefused')}</p>
+      </section>
+
+      <section className="sl-tile panel" aria-labelledby="slots-title">
+        <h2 id="slots-title" className="sl-t-title">
+          {t('settings.slots')}
+        </h2>
+        <p className="sl-t-sm">{t('settings.slotsHint')}</p>
+        <div className="slot-grid">
+          {SOURCES.map((source) => (
+            <SlotField
+              key={source}
+              source={source}
+              value={settings.slots[source]}
+              onCommit={(n) => onChange({ slots: { ...settings.slots, [source]: n } })}
+            />
+          ))}
+        </div>
       </section>
 
       <section className="sl-tile panel">

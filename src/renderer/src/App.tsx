@@ -16,6 +16,7 @@ import { Placeholder } from './screens/Placeholder'
 import { RowDetail } from './screens/RowDetail'
 import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
+import { slotsArg } from '../../shared/slots'
 import { useTheme } from './useTheme'
 
 export type View = Route | { job: string } | { row: string }
@@ -174,7 +175,7 @@ export function App() {
 
   const findJobs = async (): Promise<void> => {
     setView('search')
-    const r = await window.shortlist.startRun({ command: 'scrape', input: '' })
+    const r = await window.shortlist.startRun({ command: 'scrape', input: slotsArg(settings.slots) })
     if (!r.ok) return
     const id = crypto.randomUUID()
     scrapeRuns.current.set(r.runId, id)

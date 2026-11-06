@@ -3,6 +3,7 @@
 
 import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
 import type { Pick, SearchData } from './search'
+import { cleanSlots, DEFAULT_SLOTS, type Slots } from './slots.ts'
 import type { TrackerData } from './tracker'
 
 export const THEME_CHOICES = ['system', 'midnight', 'light-relax'] as const
@@ -18,9 +19,11 @@ export interface Settings {
   askEveryChange: boolean
   /** Ask before every web page or web search. Off: reading the web goes ahead. */
   askWeb: boolean
+  /** How many postings each source may add per "Find new jobs" run. */
+  slots: Slots
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false, slots: DEFAULT_SLOTS }
 
 export interface AppInfo {
   name: string
@@ -110,7 +113,7 @@ export interface ShortlistApi {
 
 /** Keeps only known keys with valid values; anything else is dropped. */
 export function cleanSettings(input: unknown, base: Settings = DEFAULT_SETTINGS): Settings {
-  const out: Settings = { ...base }
+  const out: Settings = { ...base, slots: { ...base.slots } }
   if (typeof input !== 'object' || input === null) return out
   const raw = input as Record<string, unknown>
   if (typeof raw.theme === 'string' && (THEME_CHOICES as readonly string[]).includes(raw.theme)) {
@@ -119,5 +122,6 @@ export function cleanSettings(input: unknown, base: Settings = DEFAULT_SETTINGS)
   if (typeof raw.guide === 'boolean') out.guide = raw.guide
   if (typeof raw.askEveryChange === 'boolean') out.askEveryChange = raw.askEveryChange
   if (typeof raw.askWeb === 'boolean') out.askWeb = raw.askWeb
+  if ('slots' in raw) out.slots = cleanSlots(raw.slots, base.slots)
   return out
 }

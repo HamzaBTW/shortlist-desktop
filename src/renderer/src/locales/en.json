@@ -48,7 +48,10 @@
     "alwaysRefused": "Always refused, whatever this switch says: changes outside your folder, uploading to GitHub, deleting folders and admin commands.",
     "askWeb": "Ask before it looks things up online",
     "askWebOff": "Off: commands can read job pages and search the web without asking. Your folder's rules on robots.txt and site terms still apply.",
-    "askWebOn": "On: every web page and web search shows an Allow once / Deny card."
+    "askWebOn": "On: every web page and web search shows an Allow once / Deny card.",
+    "slots": "Job sources",
+    "slotsHint": "How many postings each source may add when you press Find new jobs. Whole numbers, 0 or more; 0 skips that source.",
+    "slotsInvalid": "Use a whole number, 0 or more."
   },
   "placeholder": {
     "body": "This screen comes later."
@@ -285,5 +288,12 @@
       "unreadable": "The list of found jobs couldn't be read.",
       "tooLarge": "The list of found jobs is too large to show here."
     }
+  },
+  "source": {
+    "linkedin": "LinkedIn",
+    "freehire": "freehire",
+    "indeed": "Indeed",
+    "careers": "Careers pages",
+    "other": "Other"
   }
 }

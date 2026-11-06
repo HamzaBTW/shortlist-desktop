@@ -2,6 +2,7 @@ import type { WebContents } from 'electron'
 import { NO_INPUT_COMMANDS, RUNNABLE_COMMANDS, type RunnableCommand, type ContinueRun, type RunEvent, type StartRun } from '../shared/engine'
 import { Channels, type RunStartResult } from '../shared/ipc'
 import { ClaudeCodeRun } from './engine/claude-code'
+import { isScrapeInput } from '../shared/slots'
 import { loadSettings } from './settings'
 import { currentWorkspace } from './workspace'
 
@@ -35,6 +36,7 @@ export function startRun(target: WebContents, raw: unknown): RunStartResult {
   const input = req.input.trim()
   if (input.length > MAX_INPUT) return { ok: false, reason: 'badInput' }
   if (!input && !NO_INPUT_COMMANDS.includes(req.command as RunnableCommand)) return { ok: false, reason: 'badInput' }
+  if (req.command === 'scrape' && !isScrapeInput(input)) return { ok: false, reason: 'badInput' }
   return begin(target, input ? `/${req.command} ${input}` : `/${req.command}`)
 }
 
