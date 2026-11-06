@@ -1,6 +1,8 @@
 // Jobs that /scrape found and /rank scored, as the Search & rank screen sees them.
 // Read from the folder's job_scraper/seen_jobs.json; the app never writes that file.
 
+import type { SourceLabel } from './slots.ts'
+
 export interface RankedJob {
   /** The framework's own key for the posting (tools/job_key.py). */
   key: string
@@ -24,6 +26,8 @@ export interface RankedJob {
   /** cli / websearch / connector (Indeed connector entries are never fetched). */
   source: string
   portal: string
+  /** One of the four sources, or "other" (then `portal` is the tag to show as text). */
+  sourceLabel: SourceLabel
 }
 
 export interface SearchData {
@@ -34,6 +38,10 @@ export interface SearchData {
   waiting: number
   /** The most recent rank date, YYYY-MM-DD. */
   lastRanked: string | null
+  /** Postings per source from the latest search (entries first seen on the most recent date; closed ones left out). */
+  perSource: Record<SourceLabel, number>
+  /** The date of that search, YYYY-MM-DD. */
+  searchedOn: string | null
   error?: 'unreadable' | 'tooLarge'
 }
 

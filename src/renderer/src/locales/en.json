@@ -287,6 +287,11 @@
     "error": {
       "unreadable": "The list of found jobs couldn't be read.",
       "tooLarge": "The list of found jobs is too large to show here."
+    },
+    "mix": {
+      "title": "Postings per source, search of {{date}}",
+      "off": "off",
+      "none": "{{source}} returned nothing"
     }
   },
   "source": {

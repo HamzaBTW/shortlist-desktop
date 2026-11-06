@@ -1,6 +1,7 @@
 import { readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import type { RankedJob, SearchData } from '../shared/search.ts'
+import { sourceOf, type SourceLabel } from '../shared/slots.ts'
 import { matchKey } from '../shared/tracker.ts'
 
 // Reads job_scraper/seen_jobs.json (written by /scrape and /rank). Never writes it.
@@ -10,6 +11,17 @@ const CANDIDATES = [
   ['job_scraper', 'seen_jobs.json'],
   ['.claude', 'skills', 'job-scraper', 'job_scraper', 'seen_jobs.json']
 ]
+const noCounts = (): Record<SourceLabel, number> => ({ linkedin: 0, freehire: 0, indeed: 0, careers: 0, other: 0 })
+const empty = (found: boolean, error?: SearchData['error']): SearchData => ({
+  found,
+  ranked: [],
+  waiting: 0,
+  lastRanked: null,
+  perSource: noCounts(),
+  searchedOn: null,
+  ...(error ? { error } : {})
+})
+export const emptySearch = (): SearchData => empty(false)
 const MAX_BYTES = 30 * 1024 * 1024
 const TEXT_CAP = 400
 
@@ -31,12 +43,12 @@ export function findSeenFile(workspace: string): string | null {
 /** Ranked jobs, best first. Jobs already in the tracker (company + role) are left out: they are on the board. */
 export function readSeen(workspace: string, trackerKeys: Set<string>): SearchData {
   const file = findSeenFile(workspace)
-  if (!file) return { found: false, ranked: [], waiting: 0, lastRanked: null }
+  if (!file) return empty(false)
   try {
-    if (statSync(file).size > MAX_BYTES) return { found: true, ranked: [], waiting: 0, lastRanked: null, error: 'tooLarge' }
+    if (statSync(file).size > MAX_BYTES) return empty(true, 'tooLarge')
     return parseSeen(readFileSync(file, 'utf8'), trackerKeys)
   } catch {
-    return { found: true, ranked: [], waiting: 0, lastRanked: null, error: 'unreadable' }
+    return empty(true, 'unreadable')
   }
 }
 
@@ -46,11 +58,15 @@ export function parseSeen(text: string, trackerKeys: Set<string>): SearchData {
   const ranked: RankedJob[] = []
   let waiting = 0
   let lastRanked: string | null = null
+  const stamped: { source: SourceLabel; firstSeen: string }[] = []
 
   for (const [key, raw] of Object.entries(seen)) {
     if (typeof raw !== 'object' || raw === null) continue
     const e = raw as Record<string, unknown>
     const status = str(e['status'])
+    if (status !== 'skipped' && status !== 'expired' && e['dropped'] !== true) {
+      stamped.push({ source: sourceOf(str(e['portal'], 80)), firstSeen: str(e['first_seen'], 10) })
+    }
     if (status === 'new' || status === 'unreachable') {
       waiting++
       continue
@@ -79,9 +95,13 @@ export function parseSeen(text: string, trackerKeys: Set<string>): SearchData {
       languageGate: str(e['language_gate'], 10),
       guard: str(e['guard'], 200),
       source: str(e['source'], 20),
-      portal: str(e['portal'], 80)
+      portal: str(e['portal'], 80),
+      sourceLabel: sourceOf(str(e['portal'], 80))
     })
   }
   ranked.sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
-  return { found: true, ranked, waiting, lastRanked }
+  const searchedOn = stamped.reduce<string | null>((max, x) => (x.firstSeen && (!max || x.firstSeen > max) ? x.firstSeen : max), null)
+  const perSource = noCounts()
+  for (const x of stamped) if (searchedOn && x.firstSeen === searchedOn) perSource[x.source]++
+  return { found: true, ranked, waiting, lastRanked, perSource, searchedOn }
 }

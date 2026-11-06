@@ -63,3 +63,35 @@ test('only plain web links reach the browser', () => {
     assert.equal(safeWebLink(bad), null, String(bad).slice(0, 30))
   }
 })
+
+const MIX = JSON.stringify({
+  seen: {
+    a: { title: 'A', company: 'A', portal: 'linkedin', status: 'ranked', rank_score: 70, first_seen: '2026-11-06' },
+    b: { title: 'B', company: 'B', portal: 'LinkedIn', status: 'new', first_seen: '2026-11-06' },
+    c: { title: 'C', company: 'C', portal: 'freehire-search', status: 'new', first_seen: '2026-11-06' },
+    d: { title: 'D', company: 'D', portal: 'whatjobs', status: 'ranked', rank_score: 50, first_seen: '2026-11-06' },
+    e: { title: 'E', company: 'E', portal: 'indeed', status: 'skipped', dropped: true, first_seen: '2026-11-06' },
+    f: { title: 'F', company: 'F', portal: 'careers: f.example', status: 'new', first_seen: '2026-11-01' },
+    g: { title: 'G', company: 'G', status: 'new', first_seen: '2026-11-06' }
+  }
+})
+
+test('source mix: counts the latest search per source; closed ones and older searches are left out', () => {
+  const data = parseSeen(MIX, new Set())
+  assert.equal(data.searchedOn, '2026-11-06')
+  assert.deepEqual(data.perSource, { linkedin: 2, freehire: 1, indeed: 0, careers: 0, other: 2 })
+})
+
+test('source mix: each ranked job carries its source; unknown tags stay as their own text', () => {
+  const data = parseSeen(MIX, new Set())
+  const by = Object.fromEntries(data.ranked.map((r) => [r.company, r]))
+  assert.equal(by['A']!.sourceLabel, 'linkedin')
+  assert.equal(by['D']!.sourceLabel, 'other')
+  assert.equal(by['D']!.portal, 'whatjobs')
+})
+
+test('source mix: no search yet means no counts', () => {
+  const data = parseSeen(JSON.stringify({ seen: {} }), new Set())
+  assert.equal(data.searchedOn, null)
+  assert.deepEqual(data.perSource, { linkedin: 0, freehire: 0, indeed: 0, careers: 0, other: 0 })
+})

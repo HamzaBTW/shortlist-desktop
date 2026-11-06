@@ -9,7 +9,7 @@ import { detect, openSignIn } from './engine/claude-code'
 import { answerPermission, answerQuestion, cancelRun, continueRun, startRun } from './runs'
 import { Store } from './store'
 import { readTracker } from './tracker'
-import { readSeen } from './seen'
+import { emptySearch, readSeen } from './seen'
 import path from 'node:path'
 
 /** Only the app's own screens may call in; anything else is refused. */
@@ -91,7 +91,7 @@ export function registerIpc(): void {
   })
   handle(Channels.searchRead, () => {
     const ws = workspacePath()
-    if (!ws) return { found: false, ranked: [], waiting: 0, lastRanked: null }
+    if (!ws) return emptySearch()
     return readSeen(ws, new Set(readTracker(ws).rows.map((r) => r.matchKey)))
   })
   handle(Channels.openLink, async (_event, raw) => {

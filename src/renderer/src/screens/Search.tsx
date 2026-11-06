@@ -5,11 +5,14 @@ import { PermissionCard, QuestionCard } from '../components/AskCards'
 import { FitRing } from '../components/FitRing'
 import { Markdown } from '../components/Markdown'
 import type { Job } from '../jobs'
+import { SOURCES, type Slots } from '../../../shared/slots'
 
 interface SearchProps {
   /** Folder and engine ready, and no other job running. */
   canRun: boolean
   search: SearchData | null
+  /** The shares set in Settings. */
+  slots: Slots
   picks: Record<string, Pick>
   /** The latest Find new jobs run, if any. */
   job: Job | null
@@ -35,7 +38,7 @@ function ResultCard(props: {
 }) {
   const { r, pick, started, canRun, onCheck, onPick } = props
   const { t } = useTranslation()
-  const meta = [r.location, r.deadline && t('card.deadline', { date: r.deadline }), r.portal].filter(Boolean).join(' · ')
+  const meta = [r.location, r.deadline && t('card.deadline', { date: r.deadline })].filter(Boolean).join(' · ')
 
   return (
     <article className="sl-tile result" aria-labelledby={`r-${r.key}`}>
@@ -51,6 +54,7 @@ function ResultCard(props: {
       </div>
 
       <div className="result__badges">
+        <span className="sl-badge sl-badge--muted">{r.sourceLabel === 'other' ? r.portal || t('source.other') : t(`source.${r.sourceLabel}`)}</span>
         {r.verdict && (
           <span className="sl-badge sl-badge--info">
             {t(`fit.verdict.${r.verdict.toLowerCase()}`, { defaultValue: t('search.verdict', { verdict: r.verdict }) })}
@@ -119,7 +123,41 @@ function ResultCard(props: {
   )
 }
 
-export function Search({ canRun, search, picks, job, started, onFind, onRankRest, onCheck, onPick }: SearchProps) {
+function SourceCounts({ search, slots }: { search: SearchData; slots: Slots }) {
+  const { t } = useTranslation()
+  if (!search.searchedOn) return null
+  return (
+    <section aria-labelledby="mix-title" className="mix">
+      <span id="mix-title" className="sl-t-label">
+        {t('search.mix.title', { date: search.searchedOn })}
+      </span>
+      <ul className="plain mix__list">
+        {SOURCES.map((s) => {
+          const found = search.perSource[s]
+          const empty = found === 0 && slots[s] > 0
+          return (
+            <li key={s} className={empty ? 'mix__item mix__item--warn' : 'mix__item'}>
+              <span className="mix__name">{t(`source.${s}`)}</span>{' '}
+              <span className="mix__count">
+                {slots[s] === 0 ? t('search.mix.off') : `${found}/${slots[s]}`}
+              </span>
+              {empty && (
+                <span className="sl-badge sl-badge--warning">▲ {t('search.mix.none', { source: t(`source.${s}`) })}</span>
+              )}
+            </li>
+          )
+        })}
+        {search.perSource.other > 0 && (
+          <li className="mix__item">
+            <span className="mix__name">{t('source.other')}</span> <span className="mix__count">{search.perSource.other}</span>
+          </li>
+        )}
+      </ul>
+    </section>
+  )
+}
+
+export function Search({ canRun, search, slots, picks, job, started, onFind, onRankRest, onCheck, onPick }: SearchProps) {
   const { t } = useTranslation()
   const [showHidden, setShowHidden] = useState(false)
   const running = job?.phase === 'running'
@@ -149,6 +187,7 @@ export function Search({ canRun, search, picks, job, started, onFind, onRankRest
           : t('search.summary', { ranked: ranked.length, waiting: search.waiting }) +
             (search.lastRanked ? ` ${t('search.lastRanked', { date: search.lastRanked })}` : '')}
       </p>
+      {search?.found && <SourceCounts search={search} slots={slots} />}
       {search?.error && (
         <p role="alert" className="notice">
           ▲ {t(`search.error.${search.error}`)}

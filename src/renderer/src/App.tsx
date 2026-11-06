@@ -280,6 +280,7 @@ export function App() {
       <Search
         canRun={ready && !running}
         search={search}
+        slots={settings.slots}
         picks={picks}
         job={jobs.filter((j) => j.kind === 'search').sort((a, b) => b.createdAt - a.createdAt)[0] ?? null}
         started={new Set(jobs.map((j) => j.rankedKey).filter((k): k is string => Boolean(k)))}
