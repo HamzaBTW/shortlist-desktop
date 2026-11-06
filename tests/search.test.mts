@@ -142,3 +142,37 @@ test('top-up: nobody to give to, or nothing freed, means no search', () => {
 test('top-up: keep fills the same source again, as many as were closed', () => {
   assert.deepEqual(topUpSlots({ indeed: 2, careers: 1 }, S, 'keep'), { linkedin: 0, freehire: 0, indeed: 2, careers: 1 })
 })
+
+import { indeedTool } from '../src/main/engine/policy.ts'
+
+const IND = (n: string): string => `mcp__claude_ai_Indeed__${n}`
+
+test('Indeed: searching and reading a posting run without asking', () => {
+  for (const command of ['scrape', 'apply', 'rank', undefined]) {
+    assert.deepEqual(judge(IND('search_jobs'), { query: 'analyst' }, '/ws', { command }), { decision: 'allow' })
+    assert.deepEqual(judge(IND('get_job_details'), { job_id: 'x' }, '/ws', { command }), { decision: 'allow' })
+  }
+})
+
+test('Indeed: the resume is always refused, in every command', () => {
+  for (const command of ['scrape', 'apply', 'rank', 'outcome', undefined]) {
+    assert.deepEqual(judge(IND('get_resume'), {}, '/ws', { command, allowWeb: true }), { decision: 'deny', reason: 'indeedResume' })
+  }
+})
+
+test('Indeed: company details are refused unless the command is /apply, where they ask', () => {
+  assert.deepEqual(judge(IND('get_company_data'), { company: 'Acme' }, '/ws', { command: 'apply' }), { decision: 'ask' })
+  for (const command of ['scrape', 'rank', 'outcome', undefined]) {
+    assert.deepEqual(judge(IND('get_company_data'), { company: 'Acme' }, '/ws', { command }), { decision: 'deny', reason: 'indeedCompany' })
+  }
+})
+
+test('Indeed: other tools of the connector still ask; look-alike names are not treated as Indeed', () => {
+  assert.deepEqual(judge(IND('something_new'), {}, '/ws', { command: 'scrape' }), { decision: 'ask' })
+  assert.equal(indeedTool('mcp__claude_ai_Indeed__get_resume'), 'get_resume')
+  assert.equal(indeedTool('mcp__indeed__search_jobs'), 'search_jobs')
+  assert.equal(indeedTool('mcp__other__search_jobs'), null)
+  assert.equal(indeedTool('Bash'), null)
+  assert.equal(indeedTool('mcp__other__indeed__x'), null)
+  assert.deepEqual(judge('mcp__other__get_resume', {}, '/ws', { command: 'scrape' }), { decision: 'ask' })
+})

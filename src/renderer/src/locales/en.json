@@ -175,7 +175,9 @@
     "outsideFolder": "Writing outside your folder:",
     "gitPush": "Uploading to GitHub:",
     "deleteFolder": "Deleting a folder:",
-    "admin": "Running as administrator:"
+    "admin": "Running as administrator:",
+    "indeedResume": "Reading your résumé on Indeed. No command may read it:",
+    "indeedCompany": "Looking up company details on Indeed. Only allowed while drafting an application:"
   },
   "fit": {
     "title": "How well it fits",

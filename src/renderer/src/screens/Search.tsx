@@ -316,6 +316,19 @@ export function Search({ canRun, search, slots, closing, freed, onClose, onRefil
         </section>
       )}
 
+      {job && job.denied.length > 0 && (
+        <section className="sl-tile panel" role="status">
+          <h2 className="sl-t-title">{t('job.deniedTitle')}</h2>
+          <ul className="plain">
+            {job.denied.map((d, i) => (
+              <li key={i} className="sl-t-sm">
+                ✕ {t(`deny.${d.reason}`)} <code>{d.detail}</code>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {job?.phase === 'failed' && job.error && (
         <section className="sl-check sl-check--failed fail" role="alert">
           <span className="sl-glyph sl-glyph--failed" aria-hidden="true">

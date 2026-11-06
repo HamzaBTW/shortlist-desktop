@@ -5,7 +5,7 @@ import readline from 'node:readline'
 import { APP_NAME } from '../../shared/app-info'
 import type { EngineStatus, PermissionAsk, Question, RunEvent } from '../../shared/engine'
 import { findClaude, parseVersion, versionAtLeast, type ClaudeBinary } from './find'
-import { judge } from './policy'
+import { indeedTool, judge } from './policy'
 
 // Engine 1, "Your Claude Code": the person's own installed and signed-in CLI,
 // run in the background. The app never reads, stores or handles the login.
@@ -118,6 +118,12 @@ function describe(tool: string, input: Record<string, unknown>, workspace: strin
   if (tool === 'NotebookEdit') return { kind: 'write', detail: shortPath(str('notebook_path'), workspace) }
   if (tool === 'WebFetch') return { kind: 'web', detail: str('url') }
   if (tool === 'WebSearch') return { kind: 'web', detail: str('query') }
+  const indeed = indeedTool(tool)
+  if (indeed) {
+    // Plain words: which Indeed lookup, and for what.
+    const about = Object.values(input).filter((v): v is string => typeof v === 'string' && v.length > 0 && v.length < 200).join(', ')
+    return { kind: 'other', detail: about ? `Indeed ${indeed}: ${about}` : `Indeed ${indeed}` }
+  }
   return { kind: 'other', detail: tool }
 }
 
@@ -138,7 +144,7 @@ export class ClaudeCodeRun {
      * acceptEdits: Claude Code's "accept edits" mode (file changes inside the folder go ahead).
      * allowWeb: web pages and searches go ahead without a card.
      */
-    private readonly options: { acceptEdits: boolean; allowWeb: boolean },
+    private readonly options: { acceptEdits: boolean; allowWeb: boolean; command?: string },
     private readonly emit: Emit
   ) {}
 
@@ -299,7 +305,7 @@ export class ClaudeCodeRun {
       return
     }
 
-    const verdict = judge(tool, input, this.workspace, { allowWeb: this.options.allowWeb })
+    const verdict = judge(tool, input, this.workspace, { allowWeb: this.options.allowWeb, command: this.options.command })
     const { detail, kind } = describe(tool, input, this.workspace)
 
     if (verdict.decision === 'allow') {
@@ -308,7 +314,7 @@ export class ClaudeCodeRun {
     }
 
     if (verdict.decision === 'deny') {
-      this.respond(requestId, { behavior: 'deny', message: `The ${APP_NAME} app never allows this (${verdict.reason}).` })
+      this.respond(requestId, { behavior: 'deny', message: verdict.reason === 'indeedResume' ? `The ${APP_NAME} app never lets a command read the person's Indeed resume. Do not retry it; continue without it.` : verdict.reason === 'indeedCompany' ? `The ${APP_NAME} app only allows Indeed company details while drafting an application. Continue without them.` : `The ${APP_NAME} app never allows this (${verdict.reason}).` })
       this.emit({ type: 'denied', runId: this.runId, detail, reason: verdict.reason })
       return
     }

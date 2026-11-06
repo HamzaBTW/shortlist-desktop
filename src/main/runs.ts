@@ -10,19 +10,26 @@ import { currentWorkspace } from './workspace'
 
 const MAX_INPUT = 60_000
 let current: ClaudeCodeRun | null = null
+// Which command each session belongs to, so a resumed turn keeps its command (the policy needs it).
+const sessionCommand = new Map<string, string>()
+const MAX_SESSIONS = 200
 
-function emitTo(target: WebContents): (event: RunEvent) => void {
+function emitTo(target: WebContents, command: string | undefined): (event: RunEvent) => void {
   return (event) => {
+    if (event.type === 'session' && command) {
+      if (sessionCommand.size >= MAX_SESSIONS) sessionCommand.delete(sessionCommand.keys().next().value as string)
+      sessionCommand.set(event.sessionId, command)
+    }
     if (!target.isDestroyed()) target.send(Channels.runEvent, event)
   }
 }
 
-function begin(target: WebContents, prompt: string, resume?: string): RunStartResult {
+function begin(target: WebContents, prompt: string, command: string | undefined, resume?: string): RunStartResult {
   if (current?.running) return { ok: false, reason: 'busy' }
   const ws = currentWorkspace()
   if (!ws?.ok) return { ok: false, reason: 'noWorkspace' }
   const s = loadSettings()
-  const run = new ClaudeCodeRun(ws.path, { acceptEdits: !s.askEveryChange, allowWeb: !s.askWeb }, emitTo(target))
+  const run = new ClaudeCodeRun(ws.path, { acceptEdits: !s.askEveryChange, allowWeb: !s.askWeb, command }, emitTo(target, command))
   current = run
   run.start(prompt, resume)
   return { ok: true, runId: run.runId }
@@ -37,7 +44,7 @@ export function startRun(target: WebContents, raw: unknown): RunStartResult {
   if (input.length > MAX_INPUT) return { ok: false, reason: 'badInput' }
   if (!input && !NO_INPUT_COMMANDS.includes(req.command as RunnableCommand)) return { ok: false, reason: 'badInput' }
   if (req.command === 'scrape' && !isScrapeInput(input)) return { ok: false, reason: 'badInput' }
-  return begin(target, input ? `/${req.command} ${input}` : `/${req.command}`)
+  return begin(target, input ? `/${req.command} ${input}` : `/${req.command}`, req.command)
 }
 
 export function continueRun(target: WebContents, raw: unknown): RunStartResult {
@@ -45,7 +52,7 @@ export function continueRun(target: WebContents, raw: unknown): RunStartResult {
   if (!req || typeof req.sessionId !== 'string' || typeof req.reply !== 'string') return { ok: false, reason: 'badInput' }
   const reply = req.reply.trim()
   if (!reply || reply.length > MAX_INPUT) return { ok: false, reason: 'badInput' }
-  return begin(target, reply, req.sessionId)
+  return begin(target, reply, sessionCommand.get(req.sessionId), req.sessionId)
 }
 
 export function answerPermission(raw: unknown): boolean {
