@@ -3,6 +3,7 @@ import { NO_INPUT_COMMANDS, RUNNABLE_COMMANDS, type RunnableCommand, type Contin
 import { Channels, type RunStartResult } from '../shared/ipc'
 import { ClaudeCodeRun } from './engine/claude-code'
 import { isScrapeInput } from '../shared/slots'
+import { SessionCommands } from './session-commands'
 import { loadSettings } from './settings'
 import { currentWorkspace } from './workspace'
 
@@ -10,16 +11,11 @@ import { currentWorkspace } from './workspace'
 
 const MAX_INPUT = 60_000
 let current: ClaudeCodeRun | null = null
-// Which command each session belongs to, so a resumed turn keeps its command (the policy needs it).
-const sessionCommand = new Map<string, string>()
-const MAX_SESSIONS = 200
+const sessions = new SessionCommands()
 
 function emitTo(target: WebContents, command: string | undefined): (event: RunEvent) => void {
   return (event) => {
-    if (event.type === 'session' && command) {
-      if (sessionCommand.size >= MAX_SESSIONS) sessionCommand.delete(sessionCommand.keys().next().value as string)
-      sessionCommand.set(event.sessionId, command)
-    }
+    if (event.type === 'session' && command) sessions.remember(event.sessionId, command)
     if (!target.isDestroyed()) target.send(Channels.runEvent, event)
   }
 }
@@ -52,7 +48,7 @@ export function continueRun(target: WebContents, raw: unknown): RunStartResult {
   if (!req || typeof req.sessionId !== 'string' || typeof req.reply !== 'string') return { ok: false, reason: 'badInput' }
   const reply = req.reply.trim()
   if (!reply || reply.length > MAX_INPUT) return { ok: false, reason: 'badInput' }
-  return begin(target, reply, sessionCommand.get(req.sessionId), req.sessionId)
+  return begin(target, reply, sessions.commandFor(req.sessionId), req.sessionId)
 }
 
 export function answerPermission(raw: unknown): boolean {

@@ -176,3 +176,23 @@ test('Indeed: other tools of the connector still ask; look-alike names are not t
   assert.equal(indeedTool('mcp__other__indeed__x'), null)
   assert.deepEqual(judge('mcp__other__get_resume', {}, '/ws', { command: 'scrape' }), { decision: 'ask' })
 })
+
+import { SessionCommands } from '../src/main/session-commands.ts'
+
+test('a resumed turn keeps its command, so /apply can still be asked about Indeed company data', () => {
+  const s = new SessionCommands()
+  s.remember('sess-apply', 'apply')
+  s.remember('sess-scrape', 'scrape')
+  const resumed = s.commandFor('sess-apply')
+  assert.equal(resumed, 'apply')
+  assert.deepEqual(judge('mcp__claude_ai_Indeed__get_company_data', {}, '/ws', { command: resumed }), { decision: 'ask' })
+  assert.deepEqual(judge('mcp__claude_ai_Indeed__get_company_data', {}, '/ws', { command: s.commandFor('sess-scrape') }), { decision: 'deny', reason: 'indeedCompany' })
+  assert.equal(s.commandFor('unknown'), undefined)
+})
+
+test('session commands: oldest forgotten past the cap', () => {
+  const s = new SessionCommands()
+  for (let i = 0; i < 205; i++) s.remember(`s${i}`, 'apply')
+  assert.equal(s.commandFor('s0'), undefined)
+  assert.equal(s.commandFor('s204'), 'apply')
+})
