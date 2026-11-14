@@ -8,3 +8,9 @@ Thumbs.db
 .env.*
 .vscode/
 .idea/
+
+# Local notes and working files, never published
+CLAUDE.md
+.claude/
+claude.txt
+shortlist-logo.zip

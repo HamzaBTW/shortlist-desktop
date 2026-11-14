@@ -1,4 +1,4 @@
-appId: io.github.shortlist.desktop
+appId: io.github.hamzabtw.shortlist
 directories:
   buildResources: build
   output: dist
@@ -7,6 +7,12 @@ files:
   - package.json
   - LICENSE
 asar: true
+# The fonts are under the SIL Open Font License, which asks for its text to ship with them.
+extraResources:
+  - from: src/renderer/src/assets/fonts
+    to: licenses
+    filter:
+      - OFL-*.txt
 
 # Turn off Electron features this app never uses, so they can't be abused.
 electronFuses:
@@ -19,11 +25,17 @@ electronFuses:
   grantFileProtocolExtraPrivileges: false
 
 win:
-  target: nsis
+  target:
+    - target: nsis
+      arch: x64
+  icon: build/icon.ico
+  artifactName: ${productName}-Setup-${version}.${ext}
 nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
 
 mac:
   target: dmg
