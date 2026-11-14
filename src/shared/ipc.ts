@@ -1,6 +1,7 @@
 // The only bridge between the screens (renderer) and the main process.
 // Everything the screens can ask for is listed here; nothing else is exposed.
 
+import type { DocFile } from './documents'
 import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
 import type { Pick, SearchData } from './search'
 import { cleanSlots, DEFAULT_SLOTS, type Slots } from './slots.ts'
@@ -8,6 +9,10 @@ import type { TrackerData } from './tracker'
 
 export const THEME_CHOICES = ['system', 'midnight', 'light-relax'] as const
 export type ThemeChoice = (typeof THEME_CHOICES)[number]
+
+/** How a fit result is shown: the first block of each section, or everything. */
+export const FIT_VIEWS = ['short', 'detail'] as const
+export type FitView = (typeof FIT_VIEWS)[number]
 
 export interface Settings {
   theme: ThemeChoice
@@ -19,11 +24,18 @@ export interface Settings {
   askEveryChange: boolean
   /** Ask before every web page or web search. Off: reading the web goes ahead. */
   askWeb: boolean
+  /**
+   * Run commands without asking. Off by default. The app's hard refusals still apply (writes
+   * outside the folder, git push, folder deletes, admin commands, the Indeed resume).
+   */
+  autoApprove: boolean
+  /** Short or Detail view of a fit result. */
+  fitView: FitView
   /** How many postings each source may add per "Find new jobs" run. */
   slots: Slots
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false, slots: DEFAULT_SLOTS }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SLOTS }
 
 export interface AppInfo {
   name: string
@@ -65,6 +77,9 @@ export const Channels = {
   picksList: 'picks:list',
   picksSet: 'picks:set',
   openLink: 'link:open',
+  documentsFor: 'documents:for',
+  documentsOpen: 'documents:open',
+  outcomeRecord: 'outcome:record',
   /** Main -> screens: progress of the current run. */
   runEvent: 'run:event'
 } as const
@@ -107,6 +122,12 @@ export interface ShortlistApi {
   setPick(key: string, pick: Pick | null): Promise<boolean>
   /** Opens a web link (http/https only) in the person's own browser. */
   openLink(url: string): Promise<boolean>
+  /** The PDFs a job drafted (recorded ones, else matched by company and role). Read-only. */
+  documentsFor(request: { paths: string[]; company: string; role: string; hints?: string[] }): Promise<{ files: DocFile[]; byName: boolean }>
+  /** Opens a drafted PDF (only inside cv/ or cover_letters/), or shows it in its folder. */
+  openDocument(path: string, reveal: boolean): Promise<boolean>
+  /** Records a status change with the framework's own tool, no AI. Not ok means: use the /outcome command instead. */
+  recordOutcome(request: { company: string; role: string; status: string; date: string; note: string }): Promise<{ ok: boolean; postingMissing?: boolean }>
   /** Subscribe to run progress; returns an unsubscribe function. */
   onRunEvent(listener: (event: RunEvent) => void): () => void
 }
@@ -122,6 +143,8 @@ export function cleanSettings(input: unknown, base: Settings = DEFAULT_SETTINGS)
   if (typeof raw.guide === 'boolean') out.guide = raw.guide
   if (typeof raw.askEveryChange === 'boolean') out.askEveryChange = raw.askEveryChange
   if (typeof raw.askWeb === 'boolean') out.askWeb = raw.askWeb
+  if (typeof raw.autoApprove === 'boolean') out.autoApprove = raw.autoApprove
+  if (typeof raw.fitView === 'string' && (FIT_VIEWS as readonly string[]).includes(raw.fitView)) out.fitView = raw.fitView as FitView
   if ('slots' in raw) out.slots = cleanSlots(raw.slots, base.slots)
   return out
 }

@@ -41,6 +41,36 @@ export function findClaude(env: NodeJS.ProcessEnv = process.env, platform = proc
   return null
 }
 
+function isInside(dir: string, parent: string, platform: NodeJS.Platform): boolean {
+  const p = platform === 'win32' ? path.win32 : path.posix
+  const rel = p.relative(p.resolve(parent), p.resolve(dir))
+  return rel === '' || (!rel.startsWith('..') && !p.isAbsolute(rel))
+}
+
+/**
+ * The full path of a program on the person's PATH. Started by its bare name, Windows would look
+ * in the working folder first, so a file named python.exe inside the job-search folder would run
+ * instead of the real one. Folders inside `notInside` and relative PATH entries are skipped.
+ */
+export function findProgram(
+  names: string[],
+  notInside: string,
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  isFile: (p: string) => boolean = exists
+): string | null {
+  const p = platform === 'win32' ? path.win32 : path.posix
+  const sep = platform === 'win32' ? ';' : ':'
+  const dirs = (env['PATH'] ?? env['Path'] ?? '').split(sep).filter((d) => d && p.isAbsolute(d) && !isInside(d, notInside, platform))
+  for (const name of names) {
+    for (const dir of dirs) {
+      const full = p.join(dir, name)
+      if (isFile(full)) return full
+    }
+  }
+  return null
+}
+
 /** "2.1.316 (Claude Code)" -> "2.1.316" */
 export function parseVersion(text: string): string | null {
   return /(\d+)\.(\d+)\.(\d+)/.exec(text)?.[0] ?? null

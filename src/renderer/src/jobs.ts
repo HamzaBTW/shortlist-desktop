@@ -42,6 +42,8 @@ export interface Job {
   rankedKey?: string
   /** For a status update: the row (company|role) being updated. */
   target?: string
+  /** PDFs (cv/..., cover_letters/...) this job's runs wrote, as relative paths. */
+  documents?: string[]
 }
 
 const TOOL_STEPS: Record<string, StepKey> = {
@@ -121,7 +123,8 @@ export function newJob(
     error: null,
     score: null,
     verdict: null,
-    asksToProceed: false
+    asksToProceed: false,
+    documents: []
   }
 }
 
@@ -173,6 +176,8 @@ export function applyEvent(job: Job, event: RunEvent): Job {
         asksToProceed: isApply && asksToProceed(event.result)
       }
     }
+    case 'documents':
+      return { ...job, documents: [...new Set([...(job.documents ?? []), ...event.files])] }
     case 'failed':
       return { ...job, runId: null, phase: 'failed', error: event.message, asks: [], questions: [] }
   }

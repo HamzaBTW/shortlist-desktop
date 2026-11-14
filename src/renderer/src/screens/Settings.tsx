@@ -73,6 +73,22 @@ export function Settings({ settings, onChange, workspace, onWorkspace, engine, o
         </h2>
         <div className="setting-row">
           <span className="sl-col">
+            <span id="auto-approve-label" className="setting-row__label">
+              {t('settings.autoApprove')}
+            </span>
+            <span className="sl-t-sm">{t(settings.autoApprove ? 'settings.autoApproveOn' : 'settings.autoApproveOff')}</span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            className="sl-switch"
+            aria-checked={settings.autoApprove}
+            aria-labelledby="auto-approve-label"
+            onClick={() => onChange({ autoApprove: !settings.autoApprove })}
+          />
+        </div>
+        <div className="setting-row">
+          <span className="sl-col">
             <span id="ask-every-label" className="setting-row__label">
               {t('settings.askEveryChange')}
             </span>
@@ -84,6 +100,7 @@ export function Settings({ settings, onChange, workspace, onWorkspace, engine, o
             className="sl-switch"
             aria-checked={settings.askEveryChange}
             aria-labelledby="ask-every-label"
+            disabled={settings.autoApprove}
             onClick={() => onChange({ askEveryChange: !settings.askEveryChange })}
           />
         </div>
@@ -100,6 +117,7 @@ export function Settings({ settings, onChange, workspace, onWorkspace, engine, o
             className="sl-switch"
             aria-checked={settings.askWeb}
             aria-labelledby="ask-web-label"
+            disabled={settings.autoApprove}
             onClick={() => onChange({ askWeb: !settings.askWeb })}
           />
         </div>

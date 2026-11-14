@@ -9,6 +9,8 @@ export interface StatusTarget {
   column: BoardColumn
   /** The tracker row's company|role, when the card is a row. */
   matchKey?: string
+  /** The saved job, when the card is a job with no tracker row linked yet. */
+  jobId?: string
 }
 
 interface StatusDialogProps {

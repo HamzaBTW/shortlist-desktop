@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PermissionCard, QuestionCard } from '../components/AskCards'
+import { Documents } from '../components/Documents'
 import { FitRing } from '../components/FitRing'
+import { PostingLink } from '../components/PostingLink'
 import { Markdown } from '../components/Markdown'
+import { shortenFit } from '../../../shared/fit'
+import { postingLink } from '../../../shared/links'
+import type { FitView } from '../../../shared/ipc'
 import type { TrackerRow } from '../../../shared/tracker'
 import type { Job } from '../jobs'
 
@@ -11,17 +16,28 @@ interface JobDetailProps {
   /** The tracker row this job's run added or changed, when there is one. */
   row: TrackerRow | null
   busy: boolean
+  /** Short or Detail view of the fit result, remembered in Settings. */
+  fitView: FitView
+  onFitView: (view: FitView) => void
   onReply: (job: Job, reply: string) => Promise<string | null>
   onNotNow: (job: Job) => void
   onRemove: (job: Job) => void
   onBack: () => void
 }
 
-export function JobDetail({ job, row, busy, onReply, onNotNow, onRemove, onBack }: JobDetailProps) {
+/** "Engineering Graduate Trainee - Property Finder" -> role and company, when there is no tracker row. */
+function fromTitle(title: string): { company: string; role: string } {
+  const parts = title.split(/\s+[-\u2013\u2014|@]\s+/)
+  return parts.length >= 2 ? { role: parts.slice(0, -1).join(' '), company: parts[parts.length - 1]! } : { role: '', company: '' }
+}
+
+export function JobDetail({ job, row, busy, fitView, onFitView, onReply, onNotNow, onRemove, onBack }: JobDetailProps) {
   const { t } = useTranslation()
   const [reply, setReply] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
   const running = job.phase === 'running'
+  const isApply = (job.kind ?? 'apply') === 'apply'
+  const link = isApply ? postingLink(row?.source, job.input) : null
 
   const send = async (text: string): Promise<void> => {
     setProblem(await onReply(job, text))
@@ -37,7 +53,9 @@ export function JobDetail({ job, row, busy, onReply, onNotNow, onRemove, onBack 
       <header className="job-head">
         {job.score !== null && <FitRing score={job.score} />}
         <div className="sl-col">
-          <h1 className="t-display-lg job-head__title">{job.title}</h1>
+          <h1 className="t-display-lg job-head__title">
+            {link ? <PostingLink href={link}>{job.title}</PostingLink> : job.title}
+          </h1>
           <span className={`sl-badge ${running ? 'sl-badge--info' : job.phase === 'failed' ? 'sl-badge--danger' : 'sl-badge--muted'}`}>
             {t(`job.phase.${job.kind === 'outcome' && job.phase === 'waiting' ? 'done' : job.phase}`)}
           </span>
@@ -79,6 +97,16 @@ export function JobDetail({ job, row, busy, onReply, onNotNow, onRemove, onBack 
           </div>
           <p className="sl-t-sm">{t('job.stopNote')}</p>
         </section>
+      )}
+
+      {!running && isApply && (
+        <Documents
+          paths={job.documents}
+          company={row?.company ?? fromTitle(job.title).company}
+          role={row?.role ?? fromTitle(job.title).role}
+          hints={row ? [row.cvFile, row.coverLetterFile] : []}
+          refresh={job.phase}
+        />
       )}
 
       {job.denied.length > 0 && (
@@ -135,7 +163,16 @@ export function JobDetail({ job, row, busy, onReply, onNotNow, onRemove, onBack 
             </p>
           )}
 
-          {job.result && <Markdown text={job.result} />}
+          {job.result && (
+            <div className="view-toggle" role="group" aria-label={t('fit.viewLabel')}>
+              {(['short', 'detail'] as const).map((v) => (
+                <button key={v} type="button" className="sl-btn sl-btn--sm" aria-pressed={fitView === v} onClick={() => onFitView(v)}>
+                  {t(`fit.view.${v}`)}
+                </button>
+              ))}
+            </div>
+          )}
+          {job.result && <Markdown text={fitView === 'short' ? shortenFit(job.result, job.asksToProceed) : job.result} />}
 
           {job.sessionId && job.phase !== 'running' && (
             <form
@@ -154,6 +191,12 @@ export function JobDetail({ job, row, busy, onReply, onNotNow, onRemove, onBack 
                 rows={2}
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter sends, like the Send button. Shift+Enter adds a line. Never mid-IME composition.
+                  if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return
+                  e.preventDefault()
+                  if (reply.trim() && !busy) void send(reply)
+                }}
               />
               <div className="screen__actions">
                 <button type="submit" className="sl-btn" disabled={!reply.trim() || busy}>

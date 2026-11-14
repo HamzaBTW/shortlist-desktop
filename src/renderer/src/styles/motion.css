@@ -1,0 +1,362 @@
+/* Motion, from the Shortlist design system's "Motion specimens".
+   Calm and stepwise: no looping spinner. Every motion plays once.
+   Reduced motion: app.css switches all animation and transition off (changes become instant). */
+
+:root {
+  --dur-fast: 150ms;
+  --dur-fade: 200ms;
+  --dur-panel: 250ms;
+  --dur-ring: 700ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* 01 Fit score: the number shows at once, only the arc moves. */
+@keyframes sl-ring-fill {
+  from {
+    stroke-dasharray: 0 var(--ring-c);
+  }
+}
+
+.sl-ring__arc {
+  animation: sl-ring-fill var(--dur-ring) var(--ease-out) both;
+}
+
+/* 02 Job tray: each new step brightens in 150 ms. */
+@keyframes sl-step-in {
+  from {
+    opacity: 0.4;
+  }
+}
+
+.sl-steps li {
+  transition: color var(--dur-fast) ease;
+  animation: sl-step-in var(--dur-fast) ease both;
+}
+
+/* 03 Board: hover feedback, and the lift/travel/settle of a card changing column (useBoardFlip). */
+.job-card {
+  transition:
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-out);
+}
+
+/* Hover: the card floats up a little under the cursor (also for keyboard focus). */
+.job-card:hover,
+.job-card:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-pop);
+}
+
+.job-card:active {
+  transform: translateY(-1px);
+}
+
+/* 04 Review gate: a decision card rises 16 px and fades in over 250 ms. */
+@keyframes sl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.sl-review {
+  animation: sl-rise var(--dur-panel) var(--ease-out) both;
+}
+
+/* 05 Going back: a screen cross-fades in over 200 ms. */
+@keyframes sl-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.screen-fade {
+  animation: sl-fade-in var(--dur-fade) ease both;
+}
+
+.fade-in {
+  animation: sl-fade-in var(--dur-fade) ease both;
+}
+
+/* 05 Slow data: a skeleton of the same layout, softly pulsing, replaced by a fade. */
+@keyframes sl-shimmer {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.skeleton {
+  background: var(--line);
+  border-radius: var(--radius-md);
+  animation: sl-shimmer 1.2s ease-in-out infinite;
+}
+
+.skeleton--card {
+  height: 84px;
+}
+
+.skeleton--head {
+  height: 16px;
+  width: 40%;
+  border-radius: var(--radius-sm);
+}
+
+/* Launch A: tiles assemble, then settle into a strip. About 1.2 s, once. */
+.launch {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.launch--out {
+  animation: sl-fade-out var(--dur-panel) ease both;
+  pointer-events: none;
+}
+
+@keyframes sl-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.launch__stage {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  width: 1440px;
+  height: 900px;
+  transform-origin: center;
+}
+
+.launch__tile,
+.launch__ghost {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  overflow: hidden;
+  left: var(--x0);
+  top: var(--y0);
+  width: var(--w0);
+  height: var(--h0);
+  border-radius: 28px;
+}
+
+.launch__tile {
+  background: var(--c);
+  animation: ln-tile 2200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.launch__ghost {
+  background: var(--surface-raised);
+  border-color: var(--line-strong);
+  animation: ln-ghost 2200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes ln-tile {
+  0%,
+  5% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  15%,
+  45% {
+    opacity: 1;
+    transform: scale(1);
+    left: var(--x0);
+    top: var(--y0);
+    width: var(--w0);
+    height: var(--h0);
+    background: var(--c);
+    border-color: transparent;
+    border-radius: 28px;
+  }
+  85%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    left: var(--x1);
+    top: var(--y1);
+    width: var(--w1);
+    height: var(--h1);
+    background: var(--surface);
+    border-color: var(--line);
+    border-radius: var(--r1, 20px);
+  }
+}
+
+@keyframes ln-ghost {
+  0%,
+  8% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  18%,
+  45% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  55%,
+  100% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.launch__ring {
+  position: absolute;
+  left: 28px;
+  top: 59px;
+  transform: rotate(-90deg);
+  animation: ln-ring-show 2200ms ease both;
+}
+
+@keyframes ln-ring-show {
+  0%,
+  8% {
+    opacity: 0;
+  }
+  15%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.launch__arc {
+  animation: ln-arc 2200ms ease both;
+}
+
+@keyframes ln-arc {
+  0%,
+  12% {
+    stroke-dasharray: 0 245;
+  }
+  35%,
+  100% {
+    stroke-dasharray: 184 245;
+  }
+}
+
+.launch__bar {
+  position: absolute;
+  left: 1101px;
+  top: 506px;
+  width: 224px;
+  height: 11px;
+  border-radius: 999px;
+  background: var(--line);
+  animation: ln-ring-show 2200ms ease both;
+}
+
+.launch__bar i {
+  display: block;
+  height: 100%;
+  width: 146px;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: ln-bar 2200ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes ln-bar {
+  0%,
+  12% {
+    width: 0;
+  }
+  40%,
+  100% {
+    width: 146px;
+  }
+}
+
+.launch__word {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  white-space: nowrap;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  animation: ln-word 2200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* The mark starts a little smaller than the sidebar's and grows to match it. */
+.launch__word img {
+  display: block;
+  width: auto;
+  animation: ln-mark 2200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes ln-mark {
+  0%,
+  45% {
+    height: 0.95em;
+    margin-inline-end: 0.25em;
+  }
+  85%,
+  100% {
+    height: 1.2em;
+    margin-inline-end: 0.5em;
+  }
+}
+
+@keyframes ln-word {
+  0%,
+  10% {
+    opacity: 0;
+    transform: translateY(12px);
+    left: 115px;
+    top: 508px;
+    font-size: 96px;
+  }
+  18%,
+  45% {
+    opacity: 1;
+    transform: none;
+    left: 115px;
+    top: 508px;
+    font-size: 96px;
+  }
+  85%,
+  100% {
+    opacity: 1;
+    transform: none;
+    left: var(--wx1, 44px);
+    top: var(--wy1, 34px);
+    font-size: var(--wf1, 20px);
+  }
+}
+
+.launch__tag {
+  position: absolute;
+  left: 117px;
+  top: 612px;
+  font: 500 20px/26px var(--font-sans);
+  color: var(--ink-muted);
+  animation: ln-tag 2200ms ease both;
+}
+
+@keyframes ln-tag {
+  0%,
+  14% {
+    opacity: 0;
+  }
+  22%,
+  45% {
+    opacity: 1;
+  }
+  52%,
+  100% {
+    opacity: 0;
+  }
+}

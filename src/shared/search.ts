@@ -61,4 +61,5 @@ export interface SearchData {
 }
 
 /** What the person decided about a ranked job, kept by the app (not in the folder). */
-export type Pick = 'board' | 'hidden'
+/** 'cleared' = removed by Start fresh: gone from the list, not counted as hidden. */
+export type Pick = 'board' | 'hidden' | 'cleared'

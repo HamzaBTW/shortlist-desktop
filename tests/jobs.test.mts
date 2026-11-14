@@ -63,3 +63,12 @@ test('a failure is kept with its message', () => {
   assert.equal(job.phase, 'failed')
   assert.equal(job.error, 'Claude Code stopped.')
 })
+
+test('files a run wrote are kept on the job and add up across turns', () => {
+  let job = newJob('j1', 'https://x.example/job', 'r1')
+  job = applyEvent(job, { type: 'documents', runId: 'r1', files: ['cv/a.pdf'] })
+  job = applyEvent(job, { type: 'documents', runId: 'r1', files: ['cv/a.pdf', 'cover_letters/b.pdf'] })
+  assert.deepEqual(job.documents, ['cv/a.pdf', 'cover_letters/b.pdf'])
+  // An event from another run is ignored.
+  assert.deepEqual(applyEvent(job, { type: 'documents', runId: 'other', files: ['cv/z.pdf'] }).documents, job.documents)
+})

@@ -26,6 +26,9 @@ const api: ShortlistApi = {
   listPicks: () => ipcRenderer.invoke(Channels.picksList),
   setPick: (key, pick) => ipcRenderer.invoke(Channels.picksSet, { key, pick }),
   openLink: (url) => ipcRenderer.invoke(Channels.openLink, url),
+  documentsFor: (request) => ipcRenderer.invoke(Channels.documentsFor, request),
+  openDocument: (path, reveal) => ipcRenderer.invoke(Channels.documentsOpen, { path, reveal }),
+  recordOutcome: (request) => ipcRenderer.invoke(Channels.outcomeRecord, request),
   onRunEvent: (listener) => {
     const wrapped = (_event: IpcRendererEvent, payload: RunEvent): void => listener(payload)
     ipcRenderer.on(Channels.runEvent, wrapped)

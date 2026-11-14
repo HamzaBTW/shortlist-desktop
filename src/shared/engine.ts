@@ -72,4 +72,5 @@ export type RunEvent =
   | { type: 'permissionClosed'; runId: string; requestId: string }
   | { type: 'denied'; runId: string; detail: string; reason: string }
   | { type: 'finished'; runId: string; sessionId: string | null; result: string; isError: boolean }
+  | { type: 'documents'; runId: string; files: string[] }
   | { type: 'failed'; runId: string; message: string }

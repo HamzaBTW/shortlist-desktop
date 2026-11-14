@@ -15,6 +15,21 @@
     "label": "Guide me",
     "hint": "Short explanations next to things"
   },
+  "docs": {
+    "title": "Documents",
+    "open": "Open",
+    "reveal": "Show in folder",
+    "draft": "Draft, not a PDF yet",
+    "draftHelp": "These are drafts for you to review. Once you are happy, ask for the PDF in the reply box below and it will compile them.",
+    "byName": "Found by matching the company and role in the file names.",
+    "kind": {
+      "cv": "CV",
+      "coverLetter": "Cover letter"
+    }
+  },
+  "launch": {
+    "tagline": "A calm place for the whole job hunt."
+  },
   "home": {
     "title": "Pipeline",
     "findJobs": "Find new jobs",
@@ -48,6 +63,9 @@
     "alwaysRefused": "Always refused, whatever this switch says: changes outside your folder, uploading to GitHub, deleting folders and admin commands.",
     "askWeb": "Ask before it looks things up online",
     "askWebOff": "Off: commands can read job pages and search the web without asking. Your folder's rules on robots.txt and site terms still apply.",
+    "autoApprove": "Auto-approve commands",
+    "autoApproveOn": "On: commands run without asking. It still refuses anything outside your folder, git push, deleting folders, admin commands and your Indeed resume. The two switches below are not used while this is on.",
+    "autoApproveOff": "Off: you see an Allow once / Deny card for what the AI wants to run.",
     "askWebOn": "On: every web page and web search shows an Allow once / Deny card.",
     "slots": "Job sources",
     "slotsHint": "How many postings each source may add when you press Find new jobs. Whole numbers, 0 or more; 0 skips that source.",
@@ -188,6 +206,11 @@
       "moderate": "Moderate fit",
       "weak": "Weak fit"
     },
+    "viewLabel": "How much to show",
+    "view": {
+      "short": "Short",
+      "detail": "Detail"
+    },
     "prepare": "Prepare application",
     "notNow": "Not now",
     "notNowNote": "Kept as is. You can still reply below to prepare it later.",
@@ -252,7 +275,7 @@
     "date": "When",
     "note": "Anything to add (optional)",
     "notePlaceholder": "For example: interview with the hiring manager next Tuesday",
-    "how": "Your AI engine records this in your tracker. You can keep using the board; the card moves when it's done.",
+    "how": "Recorded straight away in your tracker, no AI needed. If it can't be matched to a row, your AI engine will sort it out and the card moves when it's done.",
     "submit": "Record it",
     "jobTitle": "{{company}}: {{status}}",
     "updating": "Updating…"
@@ -283,6 +306,17 @@
     "addToBoard": "Add to board",
     "onBoard": "On board",
     "open": "Open posting",
+    "fresh": {
+      "title": "Start fresh",
+      "body": "Clears this list so you can search again on a clean screen. Jobs on your board stay. Nothing in your folder is deleted, and cleared jobs can be brought back.",
+      "button": "Clear {{count}} results"
+    },
+    "clear": {
+      "button": "Start fresh",
+      "ask": "Empty this list of {{count}} results? Jobs on your board stay.",
+      "yes": "Clear list",
+      "no": "Keep"
+    },
     "hide": "Hide",
     "unhide": "Show again",
     "showHidden": "Show {{count}} hidden",

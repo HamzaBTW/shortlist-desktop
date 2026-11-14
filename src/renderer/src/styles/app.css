@@ -67,6 +67,51 @@ button {
   background: var(--surface-raised);
 }
 
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-brand__mark {
+  height: 24px;
+  width: auto;
+}
+
+.view-toggle {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.view-toggle .sl-btn[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.doc-row__name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.sl-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .app-tray {
   margin-block-start: auto;
 }
@@ -698,4 +743,12 @@ button {
   flex-direction: column;
   gap: var(--space-2);
   max-width: 880px;
+}
+
+.fresh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sl-space-3, 12px);
 }

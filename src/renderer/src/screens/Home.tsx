@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useBoardFlip, useDelayed } from '../useMotion'
 import type { WorkspaceStatus } from '../../../shared/ipc'
 import type { Pick, RankedJob } from '../../../shared/search'
 import { BOARD_COLUMNS, type TrackerData } from '../../../shared/tracker'
@@ -55,7 +57,7 @@ function updateTarget(card: Card): StatusTarget | null {
     if (card.column === 'closed' || card.row.status === 'hired') return null
     return { company: card.row.company, role: card.row.role, column: card.column, matchKey: card.row.matchKey }
   }
-  return card.job.phase === 'running' ? null : { company: card.job.title, role: '', column: 'shortlisted' }
+  return card.job.phase === 'running' ? null : { company: card.job.title, role: '', column: 'shortlisted', jobId: card.job.id }
 }
 
 function BoardCard({ card, update, onOpen, canUpdate, onUpdate, onOpenUpdate, onCheckRanked }: BoardCardProps) {
@@ -101,7 +103,7 @@ function BoardCard({ card, update, onOpen, canUpdate, onUpdate, onOpenUpdate, on
   const target = updateTarget(card)
 
   return (
-    <div className="card-wrap">
+    <div className="card-wrap" data-flip={card.key}>
       <button type="button" className="sl-jobcard job-card" onClick={update && updateNeedsYou ? () => onOpenUpdate(update.id) : onOpen}>
         <span className="sl-col job-card__text">
           <span className="sl-jobcard__co">{title}</span>
@@ -145,6 +147,11 @@ export function Home(props: HomeProps) {
   const { workspace, engineReady, canAdd, jobs, tracker, onAddJob, onOpenJob, onOpenRow, canUpdate, onUpdateStatus, ranked, picks, onFindJobs, onCheckRanked, onNavigate } = props
   const { t } = useTranslation()
   const cards = buildBoard(tracker?.rows ?? [], jobs, ranked, picks)
+  const boardRef = useRef<HTMLDivElement>(null)
+  useBoardFlip(boardRef)
+  // Slow data: after 300 ms show the layout as a skeleton; the content then fades in.
+  const loading = Boolean(workspace?.ok) && tracker === null
+  const skeleton = useDelayed(loading, 300)
 
   return (
     <div className="screen">
@@ -175,8 +182,20 @@ export function Home(props: HomeProps) {
         </p>
       )}
 
-      <div className="board">
-        {BOARD_COLUMNS.map((col) => {
+      <div className={`board${loading ? '' : ' fade-in'}`} ref={boardRef} aria-busy={loading}>
+        {loading &&
+          BOARD_COLUMNS.map((col) => (
+            <section key={col} className="board__col" aria-hidden="true">
+              {skeleton && (
+                <>
+                  <div className="skeleton skeleton--head" />
+                  <div className="skeleton skeleton--card" />
+                  <div className="skeleton skeleton--card" />
+                </>
+              )}
+            </section>
+          ))}
+        {!loading && BOARD_COLUMNS.map((col) => {
           const items = cards.filter((c) => c.column === col)
           return (
             <section key={col} className="board__col" aria-labelledby={`col-${col}`}>

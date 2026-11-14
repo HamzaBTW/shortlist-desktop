@@ -32,13 +32,13 @@ export class Store {
   }
 
   /** "Add to board" / "Hide" decisions on ranked jobs, by the framework's job key. */
-  listPicks(workspace: string): Record<string, 'board' | 'hidden'> {
+  listPicks(workspace: string): Record<string, 'board' | 'hidden' | 'cleared'> {
     const rows = this.db.prepare('SELECT key, state FROM picks WHERE workspace = ?').all(workspace) as {
       key: string
       state: string
     }[]
-    const out: Record<string, 'board' | 'hidden'> = {}
-    for (const r of rows) if (r.state === 'board' || r.state === 'hidden') out[r.key] = r.state
+    const out: Record<string, 'board' | 'hidden' | 'cleared'> = {}
+    for (const r of rows) if (r.state === 'board' || r.state === 'hidden' || r.state === 'cleared') out[r.key] = r.state
     return out
   }
 
@@ -49,7 +49,7 @@ export class Store {
       this.db.prepare('DELETE FROM picks WHERE workspace = ? AND key = ?').run(workspace, key)
       return true
     }
-    if (state !== 'board' && state !== 'hidden') return false
+    if (state !== 'board' && state !== 'hidden' && state !== 'cleared') return false
     this.db
       .prepare(
         `INSERT INTO picks (workspace, key, state, at) VALUES (?, ?, ?, ?)

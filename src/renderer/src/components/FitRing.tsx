@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface FitRingProps {
@@ -20,7 +21,7 @@ export function FitRing({ score, size = 'lg' }: FitRingProps) {
       role="img"
       aria-label={t('fit.ringLabel', { score: value })}
     >
-      <svg width={px} height={px} aria-hidden="true">
+      <svg width={px} height={px} aria-hidden="true" style={{ '--ring-c': c } as CSSProperties}>
         <circle className="sl-ring__track" cx={px / 2} cy={px / 2} r={r} strokeWidth={stroke} />
         <circle
           className="sl-ring__arc"

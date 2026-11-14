@@ -9,6 +9,8 @@ export type Verdict = { decision: 'deny'; reason: string } | { decision: 'ask' }
 export interface PolicyOptions {
   /** Let WebFetch / WebSearch go ahead without a card. */
   allowWeb?: boolean
+  /** Auto-approve: everything that would ask goes ahead. The hard refusals below still apply. */
+  autoApprove?: boolean
   /** The slash command this run belongs to (apply, scrape, ...), as the app started it. */
   command?: string
 }
@@ -74,6 +76,12 @@ function judgeIndeed(name: string, command: string | undefined): Verdict {
 }
 
 export function judge(tool: string, input: Record<string, unknown>, workspace: string, opts: PolicyOptions = {}): Verdict {
+  const verdict = judgeOne(tool, input, workspace, opts)
+  // Auto-approve only turns a question into a yes. A refusal stays a refusal.
+  return opts.autoApprove && verdict.decision === 'ask' ? { decision: 'allow' } : verdict
+}
+
+function judgeOne(tool: string, input: Record<string, unknown>, workspace: string, opts: PolicyOptions): Verdict {
   const indeed = indeedTool(tool)
   if (indeed) return judgeIndeed(indeed, opts.command)
 

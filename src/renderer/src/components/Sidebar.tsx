@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/app-info'
+import mark from '../assets/shortlist-mark.svg'
 import type { Job } from '../jobs'
 
 export const ROUTES = ['home', 'search', 'profile', 'reports', 'settings'] as const
@@ -19,7 +20,10 @@ export function Sidebar({ route, onNavigate, guide, onGuideChange, activeJob, on
 
   return (
     <aside className="sl-side app-side">
-      <div className="sl-brand">{APP_NAME}</div>
+      <div className="sl-brand app-brand">
+        <img src={mark} alt="" className="app-brand__mark" />
+        {APP_NAME}
+      </div>
 
       <nav aria-label={t('nav.label')} className="sl-col">
         {ROUTES.map((r) => {

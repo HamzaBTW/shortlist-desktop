@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { test } from 'node:test'
-import { parseVersion, versionAtLeast } from '../src/main/engine/find.ts'
+import { findProgram, parseVersion, versionAtLeast } from '../src/main/engine/find.ts'
 import { judge } from '../src/main/engine/policy.ts'
 
 const ws = path.resolve('/work/ai-job-search')
@@ -60,4 +60,28 @@ test('version parsing and minimum', () => {
   assert.equal(versionAtLeast('2.1.309', '2.1.310'), false)
   assert.equal(versionAtLeast('2.2.0', '2.1.310'), true)
   assert.equal(versionAtLeast('1.9.999', '2.1.310'), false)
+})
+
+test('auto-approve turns questions into yes, but refusals stay refusals', () => {
+  const on = { autoApprove: true }
+  assert.deepEqual(judge('Write', { file_path: inside, content: 'x' }, ws, on), { decision: 'allow' })
+  assert.deepEqual(judge('Bash', { command: 'python tools/verify_pdf.py cv/a.pdf' }, ws, on), { decision: 'allow' })
+  assert.deepEqual(judge('WebFetch', { url: 'https://example.com' }, ws, on), { decision: 'allow' })
+  assert.equal(judge('Write', { file_path: outside, content: 'x' }, ws, on).decision, 'deny')
+  assert.equal(judge('Bash', { command: 'git push origin main' }, ws, on).decision, 'deny')
+  assert.equal(judge('Bash', { command: 'rm -rf cv' }, ws, on).decision, 'deny')
+  assert.equal(judge('Bash', { command: 'sudo make me a sandwich' }, ws, on).decision, 'deny')
+  assert.equal(judge('mcp__claude_ai_Indeed__get_resume', {}, ws, on).decision, 'deny')
+  // Without it, nothing changes.
+  assert.deepEqual(judge('Write', { file_path: inside, content: 'x' }, ws), { decision: 'ask' })
+})
+
+test('a program is found by its full path, never inside the job-search folder', () => {
+  const files = new Set(['C:\\work\\jobs\\python.exe', 'C:\\work\\jobs\\tools\\python.exe', 'C:\\Python\\python.exe'])
+  const isFile = (p: string): boolean => files.has(p)
+  const env = { PATH: 'C:\\work\\jobs;C:\\work\\jobs\\tools;.;C:\\Python' }
+  assert.equal(findProgram(['python.exe'], 'C:\\work\\jobs', env, 'win32', isFile), 'C:\\Python\\python.exe')
+  assert.equal(findProgram(['py.exe'], 'C:\\work\\jobs', env, 'win32', isFile), null)
+  const unix = (p: string): boolean => p === '/usr/bin/python3' || p === '/home/sam/jobs/bin/python3'
+  assert.equal(findProgram(['python3'], '/home/sam/jobs', { PATH: '/home/sam/jobs/bin:/usr/bin' }, 'linux', unix), '/usr/bin/python3')
 })

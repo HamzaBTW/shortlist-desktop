@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import type { EngineStatus } from '../../shared/engine'
 import { DEFAULT_SETTINGS, type RunStartResult, type Settings as SettingsData, type WorkspaceStatus } from '../../shared/ipc'
 import type { IncompleteJob, Pick, RankedJob, SearchData } from '../../shared/search'
-import type { TrackerData, TrackerRow } from '../../shared/tracker'
+import { columnFor, type TrackerData, type TrackerRow } from '../../shared/tracker'
 import { AddJobDialog } from './components/AddJobDialog'
+import { Launch } from './components/Launch'
 import { StatusDialog, type StatusTarget } from './components/StatusDialog'
 import { outcomeRequest, type OutcomeChoice } from './outcome'
 import { Sidebar, type Route } from './components/Sidebar'
@@ -41,7 +42,7 @@ export function App() {
   const [freed, setFreed] = useState<Freed>({})
 
   // Tracker rows as they were when each run started, and which job each run belongs to.
-  const before = useRef(new Map<string, { jobId: string; rows: TrackerRow[] }>())
+  const before = useRef(new Map<string, { jobId: string; rows: TrackerRow[]; linkJobId?: string }>())
   // Last saved version of each job, so only changed jobs are written.
   const saved = useRef(new Map<string, Job>())
   const trackerRef = useRef<TrackerData | null>(null)
@@ -107,7 +108,13 @@ export function App() {
       void reloadTracker().then((data) => {
         if (!start) return
         const key = changedRow(start.rows, data.rows)
-        if (key) setJobs((all) => all.map((j) => (j.id === start.jobId && j.kind !== 'outcome' ? { ...j, trackerKey: key } : j)))
+        const linkId = start.linkJobId
+        if (key)
+          setJobs((all) =>
+            all.map((j) =>
+              (j.id === start.jobId && j.kind !== 'outcome') || (linkId && j.id === linkId) ? { ...j, trackerKey: key } : j
+            )
+          )
       })
     })
     return () => {
@@ -180,12 +187,34 @@ export function App() {
   }
 
   const recordStatus = async (target: StatusTarget, choice: OutcomeChoice, date: string, note: string): Promise<string | null> => {
+    // A job card with no linked tracker row: find its row by company name, so the update changes
+    // that row instead of /outcome adding a second one named after the job title.
+    if (target.jobId) {
+      const title = target.company.toLowerCase()
+      const hits = (await reloadTracker()).rows.filter(
+        (r) => r.company.trim().length > 1 && title.includes(r.company.trim().toLowerCase()) && columnFor(r.status) !== 'closed'
+      )
+      if (hits.length === 1) {
+        const row = hits[0]!
+        const linkId = target.jobId
+        setJobs((all) => all.map((j) => (j.id === linkId ? { ...j, trackerKey: row.matchKey } : j)))
+        target = { ...target, company: row.company, role: row.role, matchKey: row.matchKey }
+      }
+    }
+    // The quick way first: the framework's own tool records it (no AI, a moment's work).
+    const direct = await window.shortlist.recordOutcome({ company: target.company, role: target.role, status: choice, date, note })
+    if (direct.ok) {
+      await reloadTracker()
+      setUpdating(null)
+      return null
+    }
+    // Otherwise (tool or Python missing, no matching row, several rows) /outcome sorts it out.
     const rows = (await reloadTracker()).rows
     const input = outcomeRequest(target.company, target.role, choice, date, note)
     const r = await window.shortlist.startRun({ command: 'outcome', input })
     if (!r.ok) return runProblem(r)
     const id = crypto.randomUUID()
-    before.current.set(r.runId, { jobId: id, rows })
+    before.current.set(r.runId, { jobId: id, rows, linkJobId: target.jobId })
     const job = newJob(id, input, r.runId, Date.now(), 'outcome')
     job.title = t('outcome.jobTitle', { company: target.company, status: t(`outcome.choice.${choice}`) })
     job.target = target.matchKey
@@ -283,6 +312,8 @@ export function App() {
         job={job}
         row={row ?? null}
         busy={running}
+        fitView={settings.fitView}
+        onFitView={(fitView) => update({ fitView })}
         onReply={reply}
         onNotNow={notNow}
         onRemove={remove}
@@ -332,6 +363,7 @@ export function App() {
         onRankRest={() => void rankRest()}
         onCheck={(r) => void checkRanked(r)}
         onPick={pick}
+        onClear={(keys) => keys.forEach((k) => pick(k, 'cleared'))}
       />
     )
   } else if (view === 'settings') {
@@ -359,7 +391,12 @@ export function App() {
         activeJob={jobs.find((j) => j.phase === 'running') ?? null}
         onOpenJob={openJob}
       />
-      <main className="app-main">{screen}</main>
+      <main className="app-main">
+        <div key={typeof view === 'string' ? view : 'job' in view ? `job:${view.job}` : `row:${view.row}`} className="screen-fade">
+          {screen}
+        </div>
+      </main>
+      <Launch ready={workspace !== null} />
       <AddJobDialog open={adding} onClose={() => setAdding(false)} onSubmit={addJob} />
       <StatusDialog target={updating} onClose={() => setUpdating(null)} onSubmit={recordStatus} />
     </div>

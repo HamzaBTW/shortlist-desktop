@@ -7,6 +7,9 @@ import { loadSettings, saveSettings } from './settings'
 import { chooseWorkspace, currentWorkspace, openWorkspace } from './workspace'
 import { detect, openSignIn } from './engine/claude-code'
 import { answerPermission, answerQuestion, cancelRun, continueRun, startRun } from './runs'
+import { documentsFor } from './doc-files'
+import { openDoc } from './documents'
+import { cleanRequest, recordOutcome } from './outcome-record'
 import { Store } from './store'
 import { readTracker } from './tracker'
 import { emptySearch, readSeen } from './seen'
@@ -99,6 +102,23 @@ export function registerIpc(): void {
     if (!url) return false
     await shell.openExternal(url)
     return true
+  })
+  handle(Channels.outcomeRecord, async (_event, raw) => {
+    const ws = workspacePath()
+    const req = cleanRequest(raw)
+    if (!ws || !req) return { ok: false }
+    const r = await recordOutcome(ws, req)
+    return r.ok ? { ok: true, postingMissing: r.postingMissing } : { ok: false }
+  })
+  handle(Channels.documentsFor, (_event, raw) => {
+    const ws = workspacePath()
+    const req = raw as { paths?: unknown; company?: unknown; role?: unknown; hints?: unknown } | null
+    return ws && req ? documentsFor(ws, { paths: req.paths, company: req.company, role: req.role, hints: req.hints }) : { files: [], byName: false }
+  })
+  handle(Channels.documentsOpen, (_event, raw) => {
+    const ws = workspacePath()
+    const req = raw as { path?: unknown; reveal?: unknown } | null
+    return ws && req ? openDoc(ws, req.path, req.reveal) : false
   })
   handle(Channels.picksList, () => {
     const ws = workspacePath()

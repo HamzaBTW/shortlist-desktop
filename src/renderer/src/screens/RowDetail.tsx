@@ -1,6 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import type { TrackerRow } from '../../../shared/tracker'
+import { Documents } from '../components/Documents'
 import { FitRing } from '../components/FitRing'
+import { PostingLink } from '../components/PostingLink'
+import { firstWebLink } from '../../../shared/links'
 
 /** One tracker row, read-only. Changes go through the job-search commands. */
 export function RowDetail({ row, onBack }: { row: TrackerRow; onBack: () => void }) {
@@ -18,6 +21,8 @@ export function RowDetail({ row, onBack }: { row: TrackerRow; onBack: () => void
     [t('row.notes'), row.notes]
   ]
 
+  const link = firstWebLink(row.source)
+
   return (
     <div className="screen">
       <button type="button" className="sl-link back" onClick={onBack}>
@@ -26,13 +31,17 @@ export function RowDetail({ row, onBack }: { row: TrackerRow; onBack: () => void
       <header className="job-head">
         {row.fitRating !== null && <FitRing score={row.fitRating} />}
         <div className="sl-col">
-          <h1 className="t-display-lg job-head__title">{row.company || row.role}</h1>
+          <h1 className="t-display-lg job-head__title">
+            {link ? <PostingLink href={link}>{row.company || row.role}</PostingLink> : row.company || row.role}
+          </h1>
           {row.company && <span className="sl-t-sm">{row.role}</span>}
           <span className="sl-badge sl-badge--muted">
             {t(`status.${row.status}`, { defaultValue: row.status || t('status.unknown') })}
           </span>
         </div>
       </header>
+
+      <Documents company={row.company} role={row.role} hints={[row.cvFile, row.coverLetterFile]} />
 
       <section className="sl-tile panel">
         <dl className="facts">
@@ -41,7 +50,7 @@ export function RowDetail({ row, onBack }: { row: TrackerRow; onBack: () => void
             .map(([k, v]) => (
               <div key={k} className="facts__row">
                 <dt className="sl-t-label">{k}</dt>
-                <dd>{v}</dd>
+                <dd>{firstWebLink(v) && v === row.source ? <PostingLink href={firstWebLink(v)!}>{v}</PostingLink> : v}</dd>
               </div>
             ))}
         </dl>

@@ -2,6 +2,7 @@ import type { WebContents } from 'electron'
 import { NO_INPUT_COMMANDS, RUNNABLE_COMMANDS, type RunnableCommand, type ContinueRun, type RunEvent, type StartRun } from '../shared/engine'
 import { Channels, type RunStartResult } from '../shared/ipc'
 import { ClaudeCodeRun } from './engine/claude-code'
+import { newDocs, snapshotDocs } from './doc-files'
 import { isScrapeInput } from '../shared/slots'
 import { SessionCommands } from './session-commands'
 import { loadSettings } from './settings'
@@ -13,9 +14,14 @@ const MAX_INPUT = 60_000
 let current: ClaudeCodeRun | null = null
 const sessions = new SessionCommands()
 
-function emitTo(target: WebContents, command: string | undefined): (event: RunEvent) => void {
+function emitTo(target: WebContents, command: string | undefined, drafted: () => string[]): (event: RunEvent) => void {
   return (event) => {
     if (event.type === 'session' && command) sessions.remember(event.sessionId, command)
+    // The PDFs this turn wrote, sent just before the turn ends so the job can list them.
+    if ((event.type === 'finished' || event.type === 'failed') && !target.isDestroyed()) {
+      const files = drafted()
+      if (files.length > 0) target.send(Channels.runEvent, { type: 'documents', runId: event.runId, files })
+    }
     if (!target.isDestroyed()) target.send(Channels.runEvent, event)
   }
 }
@@ -25,7 +31,30 @@ function begin(target: WebContents, prompt: string, command: string | undefined,
   const ws = currentWorkspace()
   if (!ws?.ok) return { ok: false, reason: 'noWorkspace' }
   const s = loadSettings()
-  const run = new ClaudeCodeRun(ws.path, { acceptEdits: !s.askEveryChange, allowWeb: !s.askWeb, command }, emitTo(target, command))
+  let before = new Map<string, number>()
+  try {
+    before = snapshotDocs(ws.path)
+  } catch {
+    // No document list for this turn; the run itself is unaffected.
+  }
+  const drafted = (): string[] => {
+    try {
+      return newDocs(ws.path, before)
+    } catch {
+      return []
+    }
+  }
+  const run = new ClaudeCodeRun(
+    ws.path,
+    {
+      // Auto-approve implies the two "go ahead" settings; the app's hard refusals stay in judge().
+      acceptEdits: s.autoApprove || !s.askEveryChange,
+      allowWeb: s.autoApprove || !s.askWeb,
+      autoApprove: s.autoApprove,
+      command
+    },
+    emitTo(target, command, drafted)
+  )
   current = run
   run.start(prompt, resume)
   return { ok: true, runId: run.runId }

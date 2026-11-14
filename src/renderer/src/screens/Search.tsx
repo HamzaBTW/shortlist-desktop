@@ -29,6 +29,8 @@ interface SearchProps {
   onRankRest: () => void
   onCheck: (r: RankedJob) => void
   onPick: (key: string, pick: Pick | null) => void
+  /** Start fresh: empty the list (app-side only; the framework's files stay as they are). */
+  onClear: (keys: string[]) => void
 }
 
 function flagged(r: RankedJob): boolean {
@@ -248,13 +250,17 @@ function FreedSlots(props: {
   )
 }
 
-export function Search({ canRun, search, slots, closing, freed, onClose, onRefill, onDismissFreed, picks, job, started, onFind, onRankRest, onCheck, onPick }: SearchProps) {
+export function Search({ canRun, search, slots, closing, freed, onClose, onRefill, onDismissFreed, picks, job, started, onFind, onRankRest, onCheck, onPick, onClear }: SearchProps) {
   const { t } = useTranslation()
   const [showHidden, setShowHidden] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   const running = job?.phase === 'running'
-  const ranked = search?.ranked ?? []
+  // Cleared results are gone from this screen, not just hidden.
+  const ranked = (search?.ranked ?? []).filter((r) => picks[r.key] !== 'cleared')
   const hidden = ranked.filter((r) => picks[r.key] === 'hidden')
   const shown = ranked.filter((r) => showHidden || picks[r.key] !== 'hidden')
+  // Start fresh clears what is listed, but keeps jobs on the board or already started.
+  const clearable = ranked.filter((r) => picks[r.key] !== 'hidden' && picks[r.key] !== 'board' && !started.has(r.key))
 
   return (
     <div className="screen">
@@ -346,6 +352,52 @@ export function Search({ canRun, search, slots, closing, freed, onClose, onRefil
         </details>
       )}
 
+      {!running && (clearable.length > 0 || hidden.length > 0) && (
+        <section className="sl-tile panel fresh" aria-labelledby="fresh-title">
+          <div className="sl-col">
+            <h2 id="fresh-title" className="sl-t-title">
+              {t('search.fresh.title')}
+            </h2>
+            <p className="sl-t-sm">{t('search.fresh.body')}</p>
+          </div>
+          <div className="screen__actions">
+            {confirmClear ? (
+              <>
+                <span className="sl-t-sm" role="status">
+                  {t('search.clear.ask', { count: clearable.length })}
+                </span>
+                <button
+                  type="button"
+                  className="sl-btn"
+                  onClick={() => {
+                    onClear(clearable.map((r) => r.key))
+                    setConfirmClear(false)
+                  }}
+                >
+                  {t('search.clear.yes')}
+                </button>
+                <button type="button" className="sl-btn sl-btn--quiet" onClick={() => setConfirmClear(false)}>
+                  {t('search.clear.no')}
+                </button>
+              </>
+            ) : (
+              <>
+                {clearable.length > 0 && (
+                  <button type="button" className="sl-btn" onClick={() => setConfirmClear(true)}>
+                    {t('search.fresh.button', { count: clearable.length })}
+                  </button>
+                )}
+                {hidden.length > 0 && (
+                  <button type="button" className="sl-btn sl-btn--quiet" onClick={() => setShowHidden((s) => !s)}>
+                    {showHidden ? t('search.hideHidden') : t('search.showHidden', { count: hidden.length })}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
       <div className="results">
         {shown.map((r) => (
           <ResultCard
@@ -362,12 +414,6 @@ export function Search({ canRun, search, slots, closing, freed, onClose, onRefil
 
       <MissingDetails items={search?.incomplete ?? []} closing={closing} canRun={canRun} onClose={onClose} />
       <FreedSlots freed={freed} slots={slots} canRun={canRun} onRefill={onRefill} onDismiss={onDismissFreed} />
-
-      {hidden.length > 0 && (
-        <button type="button" className="sl-link" onClick={() => setShowHidden((s) => !s)}>
-          {showHidden ? t('search.hideHidden') : t('search.showHidden', { count: hidden.length })}
-        </button>
-      )}
     </div>
   )
 }

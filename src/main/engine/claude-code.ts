@@ -4,6 +4,7 @@ import path from 'node:path'
 import readline from 'node:readline'
 import { APP_NAME } from '../../shared/app-info'
 import type { EngineStatus, PermissionAsk, Question, RunEvent } from '../../shared/engine'
+import { childEnv } from './env'
 import { findClaude, parseVersion, versionAtLeast, type ClaudeBinary } from './find'
 import { indeedTool, judge } from './policy'
 
@@ -14,15 +15,6 @@ import { indeedTool, judge } from './policy'
 export const MIN_VERSION = '2.1.310'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-/** Environment for the CLI: the person's own, minus markers that would confuse a nested run. */
-function childEnv(): NodeJS.ProcessEnv {
-  const env = { ...process.env }
-  for (const key of ['CLAUDECODE', 'CLAUDE_CODE_ENTRYPOINT', 'ELECTRON_RUN_AS_NODE', 'ELECTRON_RENDERER_URL']) {
-    delete env[key]
-  }
-  return env
-}
 
 function command(bin: ClaudeBinary, args: string[]): { file: string; args: string[] } {
   // Only fixed flags and validated session ids ever reach the command line;
@@ -144,7 +136,7 @@ export class ClaudeCodeRun {
      * acceptEdits: Claude Code's "accept edits" mode (file changes inside the folder go ahead).
      * allowWeb: web pages and searches go ahead without a card.
      */
-    private readonly options: { acceptEdits: boolean; allowWeb: boolean; command?: string },
+    private readonly options: { acceptEdits: boolean; allowWeb: boolean; autoApprove?: boolean; command?: string },
     private readonly emit: Emit
   ) {}
 
@@ -305,7 +297,7 @@ export class ClaudeCodeRun {
       return
     }
 
-    const verdict = judge(tool, input, this.workspace, { allowWeb: this.options.allowWeb, command: this.options.command })
+    const verdict = judge(tool, input, this.workspace, { allowWeb: this.options.allowWeb, autoApprove: this.options.autoApprove, command: this.options.command })
     const { detail, kind } = describe(tool, input, this.workspace)
 
     if (verdict.decision === 'allow') {

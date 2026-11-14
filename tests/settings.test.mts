@@ -8,6 +8,8 @@ test('keeps valid values', () => {
     guide: false,
     askEveryChange: true,
     askWeb: true,
+    autoApprove: false,
+    fitView: 'short',
     slots: DEFAULT_SETTINGS.slots
   })
 })
@@ -17,6 +19,15 @@ test('by default, file changes inside the folder and reading the web do not ask'
   assert.equal(DEFAULT_SETTINGS.askWeb, false)
 })
 
+test('auto-approve is off and the fit view is short by default; bad values are dropped', () => {
+  assert.equal(DEFAULT_SETTINGS.autoApprove, false)
+  assert.equal(DEFAULT_SETTINGS.fitView, 'short')
+  assert.equal(cleanSettings({ autoApprove: true, fitView: 'detail' }).autoApprove, true)
+  assert.equal(cleanSettings({ autoApprove: true, fitView: 'detail' }).fitView, 'detail')
+  assert.equal(cleanSettings({ autoApprove: 'yes', fitView: 'huge' }).autoApprove, false)
+  assert.equal(cleanSettings({ autoApprove: 'yes', fitView: 'huge' }).fitView, 'short')
+})
+
 test('drops unknown keys and bad values', () => {
   assert.deepEqual(cleanSettings({ theme: 'neon', guide: 'yes', askEveryChange: 'no', extra: 1 }), DEFAULT_SETTINGS)
   assert.deepEqual(cleanSettings(null), DEFAULT_SETTINGS)
@@ -24,8 +35,8 @@ test('drops unknown keys and bad values', () => {
 })
 
 test('a patch only changes what it names', () => {
-  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true, askWeb: false, slots: DEFAULT_SETTINGS.slots }
-  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true, askWeb: false, slots: DEFAULT_SETTINGS.slots })
+  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short' as const, slots: DEFAULT_SETTINGS.slots }
+  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SETTINGS.slots })
 })
 
 import { cleanSlots, DEFAULT_SLOTS, isScrapeInput, slotsArg, sourceOf } from '../src/shared/slots.ts'
