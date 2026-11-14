@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/HamzaBTW/shortlist-desktop/security/advisories/new
+    about: Report privately, please don't open a public issue.
+  - name: Problem with a job-search command (/apply, /scrape, /rank ...)
+    url: https://github.com/ai-job-search-dev/ai-job-search/issues
+    about: The commands live in the ai-job-search framework.

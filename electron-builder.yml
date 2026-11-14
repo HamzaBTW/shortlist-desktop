@@ -41,8 +41,13 @@ mac:
   target: dmg
   category: public.app-category.productivity
 
+# .deb only (Ubuntu, Debian, Mint). No AppImage: its launcher adds --no-sandbox where user
+# namespaces are restricted (the Ubuntu 24.04+ default), so the app would start with the sandbox
+# off. The .deb installs an AppArmor profile that keeps the sandbox on.
 linux:
   target:
-    - AppImage
-    - deb
+    - target: deb
+      arch: x64
   category: Office
+  # The .deb format needs a maintainer with an address; this is the GitHub no-reply one.
+  maintainer: HamzaBTW <184725831+HamzaBTW@users.noreply.github.com>

@@ -13,15 +13,20 @@ A calm desktop app for the open-source [ai-job-search](https://github.com/ai-job
 **Status:** early. It connects to your folder and to your own signed-in Claude Code, adds jobs and checks your fit, finds and ranks new jobs, shows your tracker as a board, and records status updates. Still to come: API-key engine, setup checklist, Profile and Reports screens.
 
 ## Platforms
-Windows is tested. macOS and Linux builds are set up but untested; contributors welcome.
+- **Windows:** tested. The installer is on the [Releases page](https://github.com/HamzaBTW/shortlist-desktop/releases).
+- **Linux:** untested; contributors welcome. Releases carry a `.deb` (x64) for Ubuntu, Debian and Mint. Before a release it is only checked to install and start on the build machine, so a release can come without it when that check fails.
+  - Install or update: `sudo apt install ./<the downloaded file>.deb`. Remove: `sudo apt remove shortlist`.
+  - There is no AppImage: on many systems (Ubuntu 24.04 and newer) it would start with the sandbox switched off.
+  - Other Linux systems: build from source with `npm run dist:linux`.
+- **macOS:** untested; contributors welcome. Build from source with `npm run dist:mac`.
 
 ## Install (Windows)
 1. Install what Shortlist needs first. It checks for these and never installs them for you:
    - **Claude Code** 2.1.310 or newer, installed and signed in. Shortlist runs on your own account.
    - **A copy of [ai-job-search](https://github.com/ai-job-search-dev/ai-job-search)** with your profile filled in. Shortlist asks you to pick this folder.
    - **Python 3.10 or newer**, **Bun**, and the **PDF toolkit** (`lualatex`, `xelatex`, the `pypdf` package and Poppler) that ai-job-search itself uses.
-2. Download `Shortlist-Setup-<version>.exe` and run it. It installs for your user only, so it needs no administrator rights. You can pick the folder.
-3. Windows may show **"Windows protected your PC"** because this build is not code-signed yet. That warning means "unknown publisher", not "malware found". To continue, choose **More info**, then **Run anyway**. To check the file first, compare its hash with the one published next to it: `Get-FileHash .\Shortlist-Setup-<version>.exe -Algorithm SHA256` in PowerShell.
+2. Download `Shortlist-Setup-<version>.exe` from the [Releases page](https://github.com/HamzaBTW/shortlist-desktop/releases) and run it. It installs for your user only, so it needs no administrator rights. You can pick the folder.
+3. Windows may show **"Windows protected your PC"** because this build is not code-signed yet. That warning means "unknown publisher", not "malware found". To continue, choose **More info**, then **Run anyway**. To check the file first, compare its hash with the one in `SHA256SUMS.txt` on the same release: `Get-FileHash .\Shortlist-Setup-<version>.exe -Algorithm SHA256` in PowerShell.
 4. Open Shortlist, go to Settings, choose your ai-job-search folder and check that your Claude Code shows as ready.
 
 To remove it, use Windows **Settings > Apps > Shortlist > Uninstall**. Your job-search folder is never touched.
@@ -62,6 +67,9 @@ These are always refused, whatever the settings: changes outside your folder, up
 
 ## Job sources
 Settings has a number per source (LinkedIn, freehire, Indeed, careers pages; 5 each by default; 0 skips a source) that limits how many postings each adds per search. Postings missing a company, location, description or apply link are listed so you can close them with one click. Indeed cannot load more results, so a source that falls short may stay short.
+
+## Contributing and security
+See [CONTRIBUTING.md](CONTRIBUTING.md). Please report security problems privately as described in [SECURITY.md](SECURITY.md), not in a public issue.
 
 ## Licence
 MIT. Bundled fonts: SIL Open Font License 1.1.

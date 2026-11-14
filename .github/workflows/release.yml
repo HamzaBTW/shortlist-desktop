@@ -1,0 +1,111 @@
+name: Release
+
+# Push a version tag (for example v0.1.0) to build the installers and attach them to a
+# draft pre-release. Nothing is published until a maintainer checks the draft and clicks Publish.
+#
+# Windows (NSIS .exe) is the tested platform and must build. Linux ships as a .deb only and is
+# untested: its build may fail without stopping the release, which then goes out with no Linux file.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            script: dist:win
+            optional: false
+          - name: linux
+            os: ubuntu-latest
+            script: dist:linux
+            optional: true
+    # A failed Linux build or start-up check leaves the Linux file out; it never blocks Windows.
+    continue-on-error: ${{ matrix.optional }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Tag matches package.json version
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      # --publish never: electron-builder must not upload anything itself; the release job does.
+      - name: Build installer
+        run: npm run ${{ matrix.script }} -- --publish never
+      # Installs the .deb, starts the app on a virtual screen and checks the sandbox is on.
+      # The file is uploaded only if this passes.
+      - name: Linux start-up check
+        if: matrix.name == 'linux'
+        run: bash .github/scripts/linux-start-check.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installer-${{ matrix.name }}
+          if-no-files-found: error
+          path: |
+            dist/*.exe
+            dist/*.deb
+
+  release:
+    name: Draft release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # create the draft release
+      id-token: write # build attestations
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: installer-*
+          path: release
+          merge-multiple: true
+      - name: Checksums
+        working-directory: release
+        run: |
+          sha256sum -- * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      # Attestations are free on public repositories only; private builds rely on the checksums.
+      - name: Build attestation
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: 'release/*'
+      - name: Create draft pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          notes="Unsigned build. Check the download against SHA256SUMS.txt before running it. Windows is tested."
+          if compgen -G "release/*.deb" > /dev/null; then
+            notes="$notes Linux is untested, contributors welcome: the .deb (x64, for Ubuntu, Debian and Mint) is only checked to install and start on the build machine."
+          else
+            echo "::warning::No Linux .deb in this release: its build or start-up check failed."
+            notes="$notes This release has no Linux file, because its build or start-up check failed."
+          fi
+          notes="$notes macOS and other Linux systems: build from source (see the README)."
+          gh release create "$GITHUB_REF_NAME" release/* \
+            --draft --prerelease --verify-tag \
+            --title "Shortlist $GITHUB_REF_NAME" \
+            --notes "$notes"

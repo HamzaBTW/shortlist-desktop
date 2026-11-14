@@ -1,0 +1,20 @@
+name: Idea or feature request
+description: Suggest something Shortlist could do better.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Shortlist is a front-end: it runs the ai-job-search commands and shows the results. Ideas that change what a command does belong in the [ai-job-search repository](https://github.com/ai-job-search-dev/ai-job-search).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: The problem or task, in your own words.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could Shortlist help?
+      description: Optional. A rough idea of the screen or button you have in mind.
