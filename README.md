@@ -1,5 +1,13 @@
 # Shortlist
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/launch-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/launch-light.svg">
+    <img src="docs/launch-dark.svg" alt="Shortlist: a calm place for the whole job hunt." width="100%">
+  </picture>
+</p>
+
 A calm desktop app for the open-source [ai-job-search](https://github.com/ai-job-search-dev/ai-job-search) workflow. It is a front-end only: your profile, tracker and application folders stay in your own copy of ai-job-search, and every button runs that repo's own commands.
 
 **Status:** early. It connects to your folder and to your own signed-in Claude Code, adds jobs and checks your fit, finds and ranks new jobs, shows your tracker as a board, and records status updates. Still to come: API-key engine, setup checklist, Profile and Reports screens.
