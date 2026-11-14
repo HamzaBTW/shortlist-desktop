@@ -54,21 +54,39 @@ function isInside(dir: string, parent: string, platform: NodeJS.Platform): boole
  */
 export function findProgram(
   names: string[],
-  notInside: string,
+  notInside: string | null,
   env: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform,
   isFile: (p: string) => boolean = exists
 ): string | null {
+  return findAllPrograms(names, notInside, env, platform, isFile)[0] ?? null
+}
+
+/**
+ * Every match on PATH, in order (names first, then PATH order), with the same rules as
+ * findProgram. Used where the first match may be the wrong one: the Windows Store "python.exe"
+ * stand-in, or Git for Windows' pdftotext ahead of Poppler's.
+ */
+export function findAllPrograms(
+  names: string[],
+  notInside: string | null,
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  isFile: (p: string) => boolean = exists
+): string[] {
   const p = platform === 'win32' ? path.win32 : path.posix
   const sep = platform === 'win32' ? ';' : ':'
-  const dirs = (env['PATH'] ?? env['Path'] ?? '').split(sep).filter((d) => d && p.isAbsolute(d) && !isInside(d, notInside, platform))
+  const dirs = (env['PATH'] ?? env['Path'] ?? '')
+    .split(sep)
+    .filter((d) => d && p.isAbsolute(d) && (notInside === null || !isInside(d, notInside, platform)))
+  const found: string[] = []
   for (const name of names) {
     for (const dir of dirs) {
       const full = p.join(dir, name)
-      if (isFile(full)) return full
+      if (!found.includes(full) && isFile(full)) found.push(full)
     }
   }
-  return null
+  return found
 }
 
 /** "2.1.316 (Claude Code)" -> "2.1.316" */

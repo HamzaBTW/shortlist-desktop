@@ -12,6 +12,7 @@ const api: ShortlistApi = {
   chooseWorkspace: () => ipcRenderer.invoke(Channels.workspaceChoose),
   openWorkspace: () => ipcRenderer.invoke(Channels.workspaceOpen),
   detectEngine: () => ipcRenderer.invoke(Channels.engineDetect),
+  checkComputer: () => ipcRenderer.invoke(Channels.healthCheck),
   signInEngine: () => ipcRenderer.invoke(Channels.engineSignIn),
   startRun: (request) => ipcRenderer.invoke(Channels.runStart, request),
   continueRun: (request) => ipcRenderer.invoke(Channels.runContinue, request),

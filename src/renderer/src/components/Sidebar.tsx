@@ -13,9 +13,11 @@ interface SidebarProps {
   onGuideChange: (on: boolean) => void
   activeJob: Job | null
   onOpenJob: (id: string) => void
+  /** Something in Settings needs fixing: shows a ▲ beside Settings. */
+  settingsAttention: boolean
 }
 
-export function Sidebar({ route, onNavigate, guide, onGuideChange, activeJob, onOpenJob }: SidebarProps) {
+export function Sidebar({ route, onNavigate, guide, onGuideChange, activeJob, onOpenJob, settingsAttention }: SidebarProps) {
   const { t } = useTranslation()
 
   return (
@@ -38,6 +40,12 @@ export function Sidebar({ route, onNavigate, guide, onGuideChange, activeJob, on
             >
               <span aria-hidden="true">{active ? '●' : '○'}</span>
               {t(`nav.${r}`)}
+              {r === 'settings' && settingsAttention && (
+                <span className="sl-badge sl-badge--warning sl-nav__count fade-in" title={t('health.navHint')}>
+                  <span aria-hidden="true">▲</span>
+                  <span className="visually-hidden">{t('health.navHint')}</span>
+                </span>
+              )}
             </button>
           )
         })}

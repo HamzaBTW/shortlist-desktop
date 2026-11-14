@@ -364,5 +364,44 @@
     "indeed": "Indeed",
     "careers": "Careers pages",
     "other": "Other"
+  },
+  "health": {
+    "title": "This computer",
+    "intro": "The job-search commands use a few free tools. Shortlist checks for them; it never installs anything. A missing tool doesn't stop you, but the commands that need it may fail or skip a step.",
+    "checking": "Checking…",
+    "allReady": "All ready",
+    "toFix_one": "{{count}} to fix",
+    "toFix_other": "{{count}} to fix",
+    "version": "Version {{version}}",
+    "showMe": "Show me how",
+    "checkAgain": "Check again",
+    "never": "Nothing is installed or changed.",
+    "navHint": "Something in Settings needs attention",
+    "name": {
+      "python": "Python",
+      "bun": "Bun",
+      "git": "Git",
+      "lualatex": "lualatex",
+      "xelatex": "xelatex",
+      "pypdf": "pypdf",
+      "poppler": "Poppler"
+    },
+    "use": {
+      "python": "runs the tracker, status updates and PDF checks",
+      "bun": "searches job sites",
+      "git": "needed to set up a new job-search folder",
+      "lualatex": "turns your CV into a PDF",
+      "xelatex": "turns your cover letter into a PDF",
+      "pypdf": "checks that recruiters' systems can read your PDFs",
+      "poppler": "checks your CV's layout page by page"
+    },
+    "problem": {
+      "missing": "Not found on this computer.",
+      "old": "Version {{version}} is too old. {{min}} or newer is needed.",
+      "needsPython": "Can't be checked until Python is installed.",
+      "noBbox": "Found, but this version can't measure page layout, so the layout check will be skipped.",
+      "brokenBbox": "Version {{version}} has a bug that stops the layout check. Update to 26.05 or newer.",
+      "noPdftoppm": "Found, but pdftoppm is missing, so CV page previews will be skipped."
+    }
   }
 }

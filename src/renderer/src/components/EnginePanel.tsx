@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { EngineStatus } from '../../../shared/engine'
+import { CLAUDE_CODE_SETUP } from '../../../shared/health'
 
 interface EnginePanelProps {
   status: EngineStatus | null
@@ -40,6 +41,11 @@ export function EnginePanel({ status, onRecheck }: EnginePanelProps) {
             {state === 'signedOut' && (
               <button type="button" className="sl-btn sl-btn--primary" onClick={() => void window.shortlist.signInEngine()}>
                 {t('engine.signIn')}
+              </button>
+            )}
+            {(state === 'notFound' || state === 'outdated') && (
+              <button type="button" className="sl-btn sl-btn--primary" onClick={() => void window.shortlist.openLink(CLAUDE_CODE_SETUP)}>
+                {t('health.showMe')}
               </button>
             )}
             <button type="button" className="sl-btn" onClick={onRecheck} disabled={state === 'checking'}>

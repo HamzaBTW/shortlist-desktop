@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import type { AppInfo, Settings as SettingsData, ThemeChoice, WorkspaceStatus } from '../../../shared/ipc'
 import type { EngineStatus } from '../../../shared/engine'
 import { EnginePanel } from '../components/EnginePanel'
+import { HealthPanel } from '../components/HealthPanel'
+import type { ToolCheck } from '../../../shared/health'
 import { SOURCES, MAX_SLOT, type Source } from '../../../shared/slots'
 import { WorkspacePanel } from '../components/WorkspacePanel'
 
@@ -19,6 +21,9 @@ interface SettingsProps {
   onWorkspace: (status: WorkspaceStatus) => void
   engine: EngineStatus | null
   onRecheckEngine: () => void
+  health: ToolCheck[] | null
+  checkingHealth: boolean
+  onRecheckHealth: () => void
 }
 
 function SlotField({ source, value, onCommit }: { source: Source; value: number; onCommit: (n: number) => void }) {
@@ -49,7 +54,7 @@ function SlotField({ source, value, onCommit }: { source: Source; value: number;
   )
 }
 
-export function Settings({ settings, onChange, workspace, onWorkspace, engine, onRecheckEngine }: SettingsProps) {
+export function Settings({ settings, onChange, workspace, onWorkspace, engine, onRecheckEngine, health, checkingHealth, onRecheckHealth }: SettingsProps) {
   const { t } = useTranslation()
   const [info, setInfo] = useState<AppInfo | null>(null)
 
@@ -66,6 +71,8 @@ export function Settings({ settings, onChange, workspace, onWorkspace, engine, o
       <WorkspacePanel workspace={workspace} onChosen={onWorkspace} />
 
       <EnginePanel status={engine} onRecheck={onRecheckEngine} />
+
+      <HealthPanel checks={health} checking={checkingHealth} onRecheck={onRecheckHealth} />
 
       <section className="sl-tile panel" aria-labelledby="perm-title">
         <h2 id="perm-title" className="sl-t-title">

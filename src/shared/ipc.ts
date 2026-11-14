@@ -2,6 +2,7 @@
 // Everything the screens can ask for is listed here; nothing else is exposed.
 
 import type { DocFile } from './documents'
+import type { ToolCheck } from './health'
 import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
 import type { Pick, SearchData } from './search'
 import { cleanSlots, DEFAULT_SLOTS, type Slots } from './slots.ts'
@@ -64,6 +65,7 @@ export const Channels = {
   workspaceOpen: 'workspace:open',
   engineDetect: 'engine:detect',
   engineSignIn: 'engine:signIn',
+  healthCheck: 'health:check',
   runStart: 'run:start',
   runContinue: 'run:continue',
   runAnswer: 'run:answer',
@@ -103,6 +105,8 @@ export interface ShortlistApi {
   detectEngine(): Promise<EngineStatus>
   /** Opens Claude Code's own sign-in in a terminal window. */
   signInEngine(): Promise<boolean>
+  /** Checks the free tools the commands use (Python, Bun, Git, LaTeX, pypdf, Poppler). Never installs. */
+  checkComputer(): Promise<ToolCheck[]>
   startRun(request: StartRun): Promise<RunStartResult>
   continueRun(request: ContinueRun): Promise<RunStartResult>
   answerPermission(requestId: string, allow: boolean): Promise<boolean>

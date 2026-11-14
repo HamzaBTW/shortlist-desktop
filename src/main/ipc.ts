@@ -6,6 +6,7 @@ import { isAppUrl } from './security'
 import { loadSettings, saveSettings } from './settings'
 import { chooseWorkspace, currentWorkspace, openWorkspace } from './workspace'
 import { detect, openSignIn } from './engine/claude-code'
+import { checkComputer, defaultDeps } from './health'
 import { answerPermission, answerQuestion, cancelRun, continueRun, startRun } from './runs'
 import { documentsFor } from './doc-files'
 import { openDoc } from './documents'
@@ -70,6 +71,8 @@ export function registerIpc(): void {
 
   handle(Channels.engineDetect, () => detect())
   handle(Channels.engineSignIn, () => openSignIn())
+  // The folder is passed only so nothing inside it is mistaken for a real program.
+  handle(Channels.healthCheck, () => checkComputer(defaultDeps(currentWorkspace()?.path ?? null)))
   handle(Channels.runStart, (event, request) => startRun(event.sender, request))
   handle(Channels.runContinue, (event, request) => continueRun(event.sender, request))
   handle(Channels.runAnswer, (_event, answer) => answerPermission(answer))

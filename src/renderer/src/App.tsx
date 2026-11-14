@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { EngineStatus } from '../../shared/engine'
+import { needsAttention, type ToolCheck } from '../../shared/health'
 import { DEFAULT_SETTINGS, type RunStartResult, type Settings as SettingsData, type WorkspaceStatus } from '../../shared/ipc'
 import type { IncompleteJob, Pick, RankedJob, SearchData } from '../../shared/search'
 import { columnFor, type TrackerData, type TrackerRow } from '../../shared/tracker'
@@ -28,6 +29,8 @@ export function App() {
   const [settings, setSettings] = useState<SettingsData>(DEFAULT_SETTINGS)
   const [workspace, setWorkspace] = useState<WorkspaceStatus | null>(null)
   const [engine, setEngine] = useState<EngineStatus | null>(null)
+  const [health, setHealth] = useState<ToolCheck[] | null>(null)
+  const [checkingHealth, setCheckingHealth] = useState(false)
   const [jobs, setJobs] = useState<Job[]>([])
   const [tracker, setTracker] = useState<TrackerData | null>(null)
   const [adding, setAdding] = useState(false)
@@ -53,6 +56,15 @@ export function App() {
     void window.shortlist.detectEngine().then(setEngine)
   }, [])
 
+  /** "This computer": at startup and on Check again (not on every focus: it starts several programs). */
+  const recheckComputer = useCallback(() => {
+    setCheckingHealth(true)
+    void window.shortlist
+      .checkComputer()
+      .then(setHealth)
+      .finally(() => setCheckingHealth(false))
+  }, [])
+
   const reloadTracker = useCallback(async (): Promise<TrackerData> => {
     const data = await window.shortlist.readTracker()
     setTracker(data)
@@ -70,6 +82,7 @@ export function App() {
     void window.shortlist.getSettings().then(setSettings)
     void window.shortlist.getWorkspace().then(setWorkspace)
     recheckEngine()
+    recheckComputer()
     const onFocus = (): void => {
       recheckEngine()
       void reloadTracker()
@@ -375,6 +388,9 @@ export function App() {
         onWorkspace={setWorkspace}
         engine={engine}
         onRecheckEngine={recheckEngine}
+        health={health}
+        checkingHealth={checkingHealth}
+        onRecheckHealth={recheckComputer}
       />
     )
   } else {
@@ -390,6 +406,11 @@ export function App() {
         onGuideChange={(guide) => update({ guide })}
         activeJob={jobs.find((j) => j.phase === 'running') ?? null}
         onOpenJob={openJob}
+        settingsAttention={
+          needsAttention(health) ||
+          (workspace !== null && !workspace.ok) ||
+          (engine !== null && engine.state !== 'ready' && engine.state !== 'checking')
+        }
       />
       <main className="app-main">
         <div key={typeof view === 'string' ? view : 'job' in view ? `job:${view.job}` : `row:${view.row}`} className="screen-fade">
