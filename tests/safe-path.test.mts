@@ -21,6 +21,12 @@ test('refuses to climb out of the folder', () => {
   }
 })
 
+test('refuses a backslash on every system, not only where it separates folders', () => {
+  for (const p of ['/..%5csecret.txt', '/assets%5capp.js', '/assets/..%5C..%5Csecret.txt', '/%5Cetc%5Cpasswd']) {
+    assert.equal(resolveInside(root, p), null, p)
+  }
+})
+
 test('refuses absolute paths and other drives', () => {
   assert.equal(resolveInside(root, '//etc/passwd'), path.join(root, 'etc', 'passwd'))
   if (process.platform === 'win32') {
