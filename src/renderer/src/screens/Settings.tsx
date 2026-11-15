@@ -5,6 +5,7 @@ import type { EngineStatus } from '../../../shared/engine'
 import { EnginePanel } from '../components/EnginePanel'
 import { HealthPanel } from '../components/HealthPanel'
 import type { ToolCheck } from '../../../shared/health'
+import { RELEASES_PAGE, type UpdateStatus } from '../../../shared/updates'
 import { SOURCES, MAX_SLOT, type Source } from '../../../shared/slots'
 import { WorkspacePanel } from '../components/WorkspacePanel'
 
@@ -26,6 +27,7 @@ interface SettingsProps {
   onRecheckHealth: () => void
   /** Opens the first-run wizard again. */
   onRunSetup: () => void
+  update: UpdateStatus | null
 }
 
 function SlotField({ source, value, onCommit }: { source: Source; value: number; onCommit: (n: number) => void }) {
@@ -56,7 +58,7 @@ function SlotField({ source, value, onCommit }: { source: Source; value: number;
   )
 }
 
-export function Settings({ settings, onChange, workspace, onWorkspace, engine, onRecheckEngine, health, checkingHealth, onRecheckHealth, onRunSetup }: SettingsProps) {
+export function Settings({ settings, onChange, workspace, onWorkspace, engine, onRecheckEngine, health, checkingHealth, onRecheckHealth, onRunSetup, update }: SettingsProps) {
   const { t } = useTranslation()
   const [info, setInfo] = useState<AppInfo | null>(null)
 
@@ -184,9 +186,40 @@ export function Settings({ settings, onChange, workspace, onWorkspace, engine, o
       </section>
 
 
-      <section className="sl-tile panel">
-        <h2 className="sl-t-title">{t('settings.about')}</h2>
-        {info && <p className="sl-t-sm">{t('settings.version', { name: info.name, version: info.version })}</p>}
+      <section className="sl-tile panel" aria-labelledby="updates-title">
+        <h2 id="updates-title" className="sl-t-title">
+          {t('updates.title')}
+        </h2>
+        <div className="setting-row">
+          <span className="sl-col">
+            <span id="update-check-label" className="setting-row__label">
+              {t('updates.switch')}
+            </span>
+            <span className="sl-t-sm">
+              {settings.updateCheck ? t('updates.on') : t('updates.off')}{' '}
+              {settings.updateCheck && update?.lastChecked
+                ? t('updates.lastChecked', { when: new Date(update.lastChecked).toLocaleString() })
+                : ''}
+            </span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            className="sl-switch"
+            aria-checked={settings.updateCheck}
+            aria-labelledby="update-check-label"
+            onClick={() => onChange({ updateCheck: !settings.updateCheck })}
+          />
+        </div>
+        <div className="setting-row">
+          <span className="sl-col">
+            {info && <span className="setting-row__label">{t('settings.version', { name: info.name, version: info.version })}</span>}
+            {update?.latest && <span className="sl-t-sm">{t('updates.banner', { version: update.latest.version })}</span>}
+          </span>
+          <button type="button" className="sl-btn" onClick={() => void window.shortlist.openLink(update?.latest?.url ?? RELEASES_PAGE)}>
+            {t('updates.releasePage')}
+          </button>
+        </div>
       </section>
     </div>
   )

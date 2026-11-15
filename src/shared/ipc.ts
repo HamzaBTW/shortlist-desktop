@@ -3,6 +3,7 @@
 
 import type { DocFile } from './documents'
 import type { NewFolderResult, Region } from './framework'
+import type { UpdateStatus } from './updates'
 import type { ToolCheck } from './health'
 import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
 import type { Pick, SearchData } from './search'
@@ -37,9 +38,11 @@ export interface Settings {
   slots: Slots
   /** The first-run wizard was finished (or skipped because a folder was already set up). */
   setupDone: boolean
+  /** Check GitHub's release list at most once a day and show a notice for a newer version. */
+  updateCheck: boolean
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SLOTS, setupDone: false }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SLOTS, setupDone: false, updateCheck: true }
 
 export interface AppInfo {
   name: string
@@ -68,6 +71,8 @@ export const Channels = {
   workspaceOpen: 'workspace:open',
   folderChooseEmpty: 'folder:chooseEmpty',
   folderSetup: 'folder:setup',
+  updatesStatus: 'updates:status',
+  updatesDismiss: 'updates:dismiss',
   engineDetect: 'engine:detect',
   engineSignIn: 'engine:signIn',
   healthCheck: 'health:check',
@@ -113,6 +118,10 @@ export interface ShortlistApi {
   chooseEmptyFolder(): Promise<{ path: string; empty: boolean } | null>
   /** Part 2: copies the framework for that region into the chosen folder, then uses it. */
   setupNewFolder(region: Region): Promise<NewFolderResult>
+  /** The update notice: asks GitHub at most once a day, only while the Settings switch is on. */
+  updateStatus(): Promise<UpdateStatus>
+  /** Closes the notice for that version ("hide until the next version"). */
+  dismissUpdate(version: string): Promise<boolean>
   /** Is "Your Claude Code" installed, recent enough and signed in? */
   detectEngine(): Promise<EngineStatus>
   /** Opens Claude Code's own sign-in in a terminal window. */
@@ -163,5 +172,6 @@ export function cleanSettings(input: unknown, base: Settings = DEFAULT_SETTINGS)
   if (typeof raw.fitView === 'string' && (FIT_VIEWS as readonly string[]).includes(raw.fitView)) out.fitView = raw.fitView as FitView
   if ('slots' in raw) out.slots = cleanSlots(raw.slots, base.slots)
   if (typeof raw.setupDone === 'boolean') out.setupDone = raw.setupDone
+  if (typeof raw.updateCheck === 'boolean') out.updateCheck = raw.updateCheck
   return out
 }

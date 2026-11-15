@@ -54,7 +54,6 @@
     "themeSystem": "Follow system",
     "themeMidnight": "Midnight",
     "themeLight": "Light-relax",
-    "about": "About",
     "version": "{{name}} version {{version}}",
     "permissions": "Permissions",
     "askEveryChange": "Ask before every file change in your folder",
@@ -529,5 +528,18 @@
       "home": "Go to my pipeline",
       "again": "You can run this setup again any time from Settings."
     }
+  },
+  "updates": {
+    "title": "Updates",
+    "switch": "Tell me when a new version is out",
+    "on": "On: at most once a day Shortlist asks GitHub for its list of releases. Nothing about you is sent, and nothing downloads by itself.",
+    "off": "Off: Shortlist never checks. Look at the release page yourself now and then.",
+    "lastChecked": "Last checked {{when}}.",
+    "releasePage": "Release page",
+    "banner": "Shortlist {{version}} is available.",
+    "youHave": "You have {{version}}.",
+    "how": "Download it from the release page, then run the installer.",
+    "whatsNew": "See what's new",
+    "hide": "Hide until the next version"
   }
 }

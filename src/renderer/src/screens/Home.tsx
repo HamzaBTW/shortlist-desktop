@@ -1,4 +1,6 @@
 import { useRef } from 'react'
+import type { UpdateInfo } from '../../../shared/updates'
+import { UpdateBanner } from '../components/UpdateBanner'
 import { useTranslation } from 'react-i18next'
 import { useBoardFlip, useDelayed } from '../useMotion'
 import type { WorkspaceStatus } from '../../../shared/ipc'
@@ -38,6 +40,9 @@ interface HomeProps {
   onFindJobs: () => void
   onCheckRanked: (r: RankedJob) => void
   onNavigate: (route: Route) => void
+  /** A newer Shortlist version the person hasn't hidden. */
+  update: UpdateInfo | null
+  onDismissUpdate: (version: string) => void
 }
 
 interface BoardCardProps {
@@ -144,7 +149,7 @@ function BoardCard({ card, update, onOpen, canUpdate, onUpdate, onOpenUpdate, on
 }
 
 export function Home(props: HomeProps) {
-  const { workspace, engineReady, canAdd, jobs, tracker, onAddJob, onOpenJob, onOpenRow, canUpdate, onUpdateStatus, ranked, picks, onFindJobs, onCheckRanked, onNavigate } = props
+  const { workspace, engineReady, canAdd, jobs, tracker, onAddJob, onOpenJob, onOpenRow, canUpdate, onUpdateStatus, ranked, picks, onFindJobs, onCheckRanked, onNavigate, update, onDismissUpdate } = props
   const { t } = useTranslation()
   const cards = buildBoard(tracker?.rows ?? [], jobs, ranked, picks)
   const boardRef = useRef<HTMLDivElement>(null)
@@ -155,6 +160,7 @@ export function Home(props: HomeProps) {
 
   return (
     <div className="screen">
+      {update && <UpdateBanner update={update} onDismiss={onDismissUpdate} />}
       <header className="screen__head">
         <h1 className="t-display-lg">{t('home.title')}</h1>
         <div className="screen__actions">

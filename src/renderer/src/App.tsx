@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { EngineStatus } from '../../shared/engine'
 import { needsAttention, type ToolCheck } from '../../shared/health'
+import type { UpdateStatus } from '../../shared/updates'
 import { DEFAULT_SETTINGS, type RunStartResult, type Settings as SettingsData, type WorkspaceStatus } from '../../shared/ipc'
 import type { IncompleteJob, Pick, RankedJob, SearchData } from '../../shared/search'
 import { columnFor, type TrackerData, type TrackerRow } from '../../shared/tracker'
@@ -35,6 +36,7 @@ export function App() {
   /** The first-run wizard is open. null until settings and folder are known. */
   const [wizard, setWizard] = useState<boolean | null>(null)
   const [setupJobId, setSetupJobId] = useState<string | null>(null)
+  const [updateNotice, setUpdateNotice] = useState<UpdateStatus | null>(null)
   const [engine, setEngine] = useState<EngineStatus | null>(null)
   const [health, setHealth] = useState<ToolCheck[] | null>(null)
   const [checkingHealth, setCheckingHealth] = useState(false)
@@ -197,6 +199,18 @@ export function App() {
     }
     setWizard(!settings.setupDone)
   }, [settingsLoaded, workspaceLoaded, wizard, settings.setupDone, workspace, update])
+
+  // Update notice: once settings are known, and again when the switch changes. The main process
+  // asks GitHub at most once a day and never while the switch is off.
+  useEffect(() => {
+    if (!settingsLoaded) return
+    void window.shortlist.updateStatus().then(setUpdateNotice)
+  }, [settingsLoaded, settings.updateCheck])
+
+  const dismissUpdate = (version: string): void => {
+    setUpdateNotice((u) => (u ? { ...u, available: null } : u))
+    void window.shortlist.dismissUpdate(version)
+  }
 
   const onWizardWorkspace = useCallback((status: WorkspaceStatus | null) => setWorkspace(status), [])
 
@@ -395,6 +409,8 @@ export function App() {
         canUpdate={ready && !running}
         onUpdateStatus={setUpdating}
         onNavigate={setView}
+        update={updateNotice?.available ?? null}
+        onDismissUpdate={dismissUpdate}
       />
     )
   } else if (view === 'search') {
@@ -431,6 +447,7 @@ export function App() {
         checkingHealth={checkingHealth}
         onRecheckHealth={recheckComputer}
         onRunSetup={() => setWizard(true)}
+        update={updateNotice}
       />
     )
   } else {

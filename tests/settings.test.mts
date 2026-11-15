@@ -11,7 +11,8 @@ test('keeps valid values', () => {
     autoApprove: false,
     fitView: 'short',
     slots: DEFAULT_SETTINGS.slots,
-    setupDone: false
+    setupDone: false,
+    updateCheck: true
   })
 })
 
@@ -36,8 +37,8 @@ test('drops unknown keys and bad values', () => {
 })
 
 test('a patch only changes what it names', () => {
-  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short' as const, slots: DEFAULT_SETTINGS.slots, setupDone: false }
-  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SETTINGS.slots, setupDone: false })
+  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short' as const, slots: DEFAULT_SETTINGS.slots, setupDone: false, updateCheck: true }
+  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SETTINGS.slots, setupDone: false, updateCheck: true })
 })
 
 test('setupDone is kept only as a boolean', () => {

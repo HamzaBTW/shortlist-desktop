@@ -7,6 +7,7 @@ import { loadSettings, saveSettings } from './settings'
 import { chooseEmptyFolder, chooseWorkspace, currentWorkspace, openWorkspace, setupNewFolder } from './workspace'
 import { detect, openSignIn } from './engine/claude-code'
 import { checkComputer, defaultDeps } from './health'
+import { dismissUpdate, updateStatus } from './updates'
 import { answerPermission, answerQuestion, cancelRun, continueRun, startRun } from './runs'
 import { documentsFor } from './doc-files'
 import { openDoc } from './documents'
@@ -70,6 +71,8 @@ export function registerIpc(): void {
   handle(Channels.workspaceOpen, () => openWorkspace())
   handle(Channels.folderChooseEmpty, (event) => chooseEmptyFolder(BrowserWindow.fromWebContents(event.sender)))
   handle(Channels.folderSetup, (_event, region) => setupNewFolder(region))
+  handle(Channels.updatesStatus, () => updateStatus())
+  handle(Channels.updatesDismiss, (_event, version) => dismissUpdate(version))
 
   handle(Channels.engineDetect, () => detect())
   handle(Channels.engineSignIn, () => openSignIn())
