@@ -136,7 +136,7 @@ export class ClaudeCodeRun {
      * acceptEdits: Claude Code's "accept edits" mode (file changes inside the folder go ahead).
      * allowWeb: web pages and searches go ahead without a card.
      */
-    private readonly options: { acceptEdits: boolean; allowWeb: boolean; autoApprove?: boolean; command?: string },
+    private readonly options: { acceptEdits: boolean; allowWeb: boolean; autoApprove?: boolean; command?: string; settingsFile?: string },
     private readonly emit: Emit
   ) {}
 
@@ -163,6 +163,8 @@ export class ClaudeCodeRun {
       // Only the workspace's own settings, never the person's global ones.
       '--setting-sources', 'project'
     ]
+    // The app's own settings on top (hooks off). A file path, not inline JSON, so cmd.exe can't mangle it.
+    if (this.options.settingsFile) args.push('--settings', this.options.settingsFile)
     if (resumeSessionId) args.push('--resume', resumeSessionId)
 
     const c = command(bin, args)

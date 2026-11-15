@@ -5,6 +5,7 @@ import { Documents } from '../components/Documents'
 import { FitRing } from '../components/FitRing'
 import { PostingLink } from '../components/PostingLink'
 import { Markdown } from '../components/Markdown'
+import { ReplyBox } from '../components/ReplyBox'
 import { shortenFit } from '../../../shared/fit'
 import { postingLink } from '../../../shared/links'
 import type { FitView } from '../../../shared/ipc'
@@ -33,7 +34,6 @@ function fromTitle(title: string): { company: string; role: string } {
 
 export function JobDetail({ job, row, busy, fitView, onFitView, onReply, onNotNow, onRemove, onBack }: JobDetailProps) {
   const { t } = useTranslation()
-  const [reply, setReply] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
   const running = job.phase === 'running'
   const isApply = (job.kind ?? 'apply') === 'apply'
@@ -41,7 +41,6 @@ export function JobDetail({ job, row, busy, fitView, onFitView, onReply, onNotNo
 
   const send = async (text: string): Promise<void> => {
     setProblem(await onReply(job, text))
-    setReply('')
   }
 
   return (
@@ -175,35 +174,7 @@ export function JobDetail({ job, row, busy, fitView, onFitView, onReply, onNotNo
           {job.result && <Markdown text={fitView === 'short' ? shortenFit(job.result, job.asksToProceed) : job.result} />}
 
           {job.sessionId && job.phase !== 'running' && (
-            <form
-              className="reply"
-              onSubmit={(e) => {
-                e.preventDefault()
-                if (reply.trim()) void send(reply)
-              }}
-            >
-              <label htmlFor={`reply-${job.id}`} className="sl-t-label">
-                {t('fit.replyLabel')}
-              </label>
-              <textarea
-                id={`reply-${job.id}`}
-                className="field field--area"
-                rows={2}
-                value={reply}
-                onChange={(e) => setReply(e.target.value)}
-                onKeyDown={(e) => {
-                  // Enter sends, like the Send button. Shift+Enter adds a line. Never mid-IME composition.
-                  if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return
-                  e.preventDefault()
-                  if (reply.trim() && !busy) void send(reply)
-                }}
-              />
-              <div className="screen__actions">
-                <button type="submit" className="sl-btn" disabled={!reply.trim() || busy}>
-                  {t('fit.send')}
-                </button>
-              </div>
-            </form>
+            <ReplyBox busy={busy} truthHint={isApply} onSend={(text) => onReply(job, text)} />
           )}
         </section>
       )}

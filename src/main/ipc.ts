@@ -4,7 +4,7 @@ import { APP_NAME } from '../shared/app-info'
 import { Channels, type AppInfo, type Settings } from '../shared/ipc'
 import { isAppUrl } from './security'
 import { loadSettings, saveSettings } from './settings'
-import { chooseWorkspace, currentWorkspace, openWorkspace } from './workspace'
+import { chooseEmptyFolder, chooseWorkspace, currentWorkspace, openWorkspace, setupNewFolder } from './workspace'
 import { detect, openSignIn } from './engine/claude-code'
 import { checkComputer, defaultDeps } from './health'
 import { answerPermission, answerQuestion, cancelRun, continueRun, startRun } from './runs'
@@ -68,6 +68,8 @@ export function registerIpc(): void {
   handle(Channels.workspaceGet, () => currentWorkspace())
   handle(Channels.workspaceChoose, (event) => chooseWorkspace(BrowserWindow.fromWebContents(event.sender)))
   handle(Channels.workspaceOpen, () => openWorkspace())
+  handle(Channels.folderChooseEmpty, (event) => chooseEmptyFolder(BrowserWindow.fromWebContents(event.sender)))
+  handle(Channels.folderSetup, (_event, region) => setupNewFolder(region))
 
   handle(Channels.engineDetect, () => detect())
   handle(Channels.engineSignIn, () => openSignIn())

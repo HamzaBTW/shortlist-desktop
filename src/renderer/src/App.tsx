@@ -18,6 +18,7 @@ import { Placeholder } from './screens/Placeholder'
 import { RowDetail } from './screens/RowDetail'
 import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
+import { Wizard } from './screens/Wizard'
 import { slotsArg, topUpSlots, type Freed, type Source, type SourceLabel } from '../../shared/slots'
 import { useTheme } from './useTheme'
 
@@ -28,6 +29,12 @@ export function App() {
   const [view, setView] = useState<View>('home')
   const [settings, setSettings] = useState<SettingsData>(DEFAULT_SETTINGS)
   const [workspace, setWorkspace] = useState<WorkspaceStatus | null>(null)
+  /** getWorkspace() answered (null then means "no folder saved yet", not "still loading"). */
+  const [workspaceLoaded, setWorkspaceLoaded] = useState(false)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+  /** The first-run wizard is open. null until settings and folder are known. */
+  const [wizard, setWizard] = useState<boolean | null>(null)
+  const [setupJobId, setSetupJobId] = useState<string | null>(null)
   const [engine, setEngine] = useState<EngineStatus | null>(null)
   const [health, setHealth] = useState<ToolCheck[] | null>(null)
   const [checkingHealth, setCheckingHealth] = useState(false)
@@ -79,8 +86,14 @@ export function App() {
 
   // Settings, engine and run events: once.
   useEffect(() => {
-    void window.shortlist.getSettings().then(setSettings)
-    void window.shortlist.getWorkspace().then(setWorkspace)
+    void window.shortlist.getSettings().then((s) => {
+      setSettings(s)
+      setSettingsLoaded(true)
+    })
+    void window.shortlist.getWorkspace().then((w) => {
+      setWorkspace(w)
+      setWorkspaceLoaded(true)
+    })
     recheckEngine()
     recheckComputer()
     const onFocus = (): void => {
@@ -173,6 +186,20 @@ export function App() {
     void window.shortlist.setSettings(patch).then(setSettings)
   }, [])
 
+  // First run: open the wizard once settings and the saved folder are known. An install that
+  // already has a working folder counts as set up, so the wizard doesn't appear by itself there.
+  useEffect(() => {
+    if (!settingsLoaded || !workspaceLoaded || wizard !== null) return
+    if (!settings.setupDone && workspace?.ok) {
+      update({ setupDone: true })
+      setWizard(false)
+      return
+    }
+    setWizard(!settings.setupDone)
+  }, [settingsLoaded, workspaceLoaded, wizard, settings.setupDone, workspace, update])
+
+  const onWizardWorkspace = useCallback((status: WorkspaceStatus | null) => setWorkspace(status), [])
+
   const runProblem = (r: RunStartResult): string | null => (r.ok ? null : t(`run.refused.${r.reason}`))
   const running = jobs.some((j) => j.phase === 'running')
   const ready = Boolean(workspace?.ok) && engine?.state === 'ready'
@@ -196,6 +223,18 @@ export function App() {
     if (!r.ok) return runProblem(r)
     before.current.set(r.runId, { jobId: job.id, rows })
     setJobs((all) => all.map((j) => (j.id === job.id ? continued(j, r.runId) : j)))
+    return null
+  }
+
+  /** Wizard step 5: the framework's own /setup, as a job the wizard follows. */
+  const startSetup = async (): Promise<string | null> => {
+    const r = await window.shortlist.startRun({ command: 'setup', input: '' })
+    if (!r.ok) return runProblem(r)
+    const id = crypto.randomUUID()
+    const job = newJob(id, '/setup', r.runId, Date.now(), 'setup')
+    job.title = t('wizard.profile.jobTitle')
+    setJobs((all) => [job, ...all])
+    setSetupJobId(id)
     return null
   }
 
@@ -391,10 +430,43 @@ export function App() {
         health={health}
         checkingHealth={checkingHealth}
         onRecheckHealth={recheckComputer}
+        onRunSetup={() => setWizard(true)}
       />
     )
   } else {
     screen = <Placeholder titleKey={`nav.${view}`} />
+  }
+
+  const finishWizard = (then?: 'find' | 'add' | 'settings'): void => {
+    update({ setupDone: true })
+    setWizard(false)
+    if (then === 'find') void findJobs()
+    else if (then === 'add') {
+      setView('home')
+      setAdding(true)
+    } else setView(then === 'settings' ? 'settings' : 'home')
+  }
+
+  if (wizard) {
+    return (
+      <div className="app app--wizard">
+        <Wizard
+          engine={engine}
+          onRecheckEngine={recheckEngine}
+          health={health}
+          checkingHealth={checkingHealth}
+          onRecheckHealth={recheckComputer}
+          workspace={workspace}
+          onWorkspace={onWizardWorkspace}
+          setupJob={jobs.find((j) => j.id === setupJobId) ?? null}
+          busy={running}
+          onStartSetup={startSetup}
+          onReply={reply}
+          onFinish={finishWizard}
+        />
+        <Launch ready={workspaceLoaded} />
+      </div>
+    )
   }
 
   return (
@@ -417,7 +489,7 @@ export function App() {
           {screen}
         </div>
       </main>
-      <Launch ready={workspace !== null} />
+      <Launch ready={workspaceLoaded} />
       <AddJobDialog open={adding} onClose={() => setAdding(false)} onSubmit={addJob} />
       <StatusDialog target={updating} onClose={() => setUpdating(null)} onSubmit={recordStatus} />
     </div>

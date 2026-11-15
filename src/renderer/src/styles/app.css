@@ -799,3 +799,281 @@ button {
   white-space: nowrap;
   border: 0;
 }
+
+/* Reply box (typed answers to a paused run) */
+.reply__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reply__foot .sl-btn {
+  margin-inline-start: auto;
+}
+
+.ask-text {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* First-run wizard: a centred column, no sidebar. */
+.app--wizard {
+  display: block;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.wizard {
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-7) var(--space-4);
+  box-sizing: border-box;
+}
+
+.wizard__col {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.wizard__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wizard__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+}
+
+.wizard__progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wizard__progress li:first-child {
+  margin-inline-end: var(--space-2);
+}
+
+.wizard__bar {
+  width: 28px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--line);
+  transition: background var(--dur-panel) ease;
+}
+
+.wizard__bar.is-on {
+  background: var(--accent);
+}
+
+.wizard__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.wizard__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.wizard__intro h1:focus {
+  outline: none;
+}
+
+.wizard__intro--hero {
+  padding-block-start: var(--space-7);
+}
+
+.wizard__lead {
+  margin: 0;
+  font: 400 16px/24px var(--font-sans);
+  color: var(--ink-muted);
+}
+
+.wizard__row {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.wizard__big {
+  height: 44px;
+  padding: 0 var(--space-5);
+  font-size: 15px;
+}
+
+.wizard__list {
+  margin: 0;
+  padding-inline-start: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.wizard__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.wizard__card {
+  width: auto;
+}
+
+.wizard__card-btn,
+.wizard__self-start {
+  align-self: flex-start;
+}
+
+.wizard__card-btn {
+  margin-block-start: auto;
+}
+
+.wizard__path {
+  font: 500 13px/19px var(--font-mono);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  overflow-wrap: anywhere;
+  align-self: stretch;
+}
+
+.wizard__ok,
+.wizard__warn {
+  margin: 0;
+  color: var(--ink);
+}
+
+.wizard__ok [aria-hidden='true'] {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.wizard__warn [aria-hidden='true'] {
+  color: var(--warning);
+  font-weight: 700;
+}
+
+.wizard__regions {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.wizard__regions legend {
+  padding: 0;
+  margin-block-end: var(--space-2);
+}
+
+.wizard__region {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease;
+}
+
+.wizard__region.is-on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.wizard__region input {
+  margin: 3px 0 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  flex: none;
+}
+
+.wizard__region-name {
+  font: 600 14px/20px var(--font-sans);
+}
+
+.wizard__problem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 1px solid var(--warning);
+  background: var(--warning-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.wizard__problem p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.wizard__done-note {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.wizard__summary {
+  gap: 0;
+}
+
+.wizard__sum {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-block-start: 1px solid var(--line);
+  font: 600 14px/20px var(--font-sans);
+}
+
+.wizard__sum:first-child {
+  border-block-start: 0;
+}
+
+.wizard__sum-text {
+  overflow-wrap: anywhere;
+}
+
+.wizard__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wizard__skip {
+  align-self: center;
+  font-size: 13px;
+}
+
+/* Panels inside the wizard use the whole column, like the cards above them. */
+.wizard__body .panel {
+  max-width: none;
+}

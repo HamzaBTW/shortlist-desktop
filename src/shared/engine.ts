@@ -19,10 +19,21 @@ export interface EngineStatus {
 }
 
 /** Commands the screens may start. Anything else is refused by the main process. */
-export const RUNNABLE_COMMANDS = ['apply', 'outcome', 'scrape', 'rank'] as const
+export const RUNNABLE_COMMANDS = ['apply', 'outcome', 'scrape', 'rank', 'setup'] as const
 /** Commands that run with nothing after them. */
-export const NO_INPUT_COMMANDS: readonly RunnableCommand[] = ['scrape', 'rank']
+export const NO_INPUT_COMMANDS: readonly RunnableCommand[] = ['scrape', 'rank', 'setup']
 export type RunnableCommand = (typeof RUNNABLE_COMMANDS)[number]
+
+/** The parts of the profile `/setup --section <name>` can update (the framework's own list). */
+export const SETUP_SECTIONS = ['identity', 'education', 'experience', 'skills', 'publications', 'behavioral', 'goals', 'references', 'search'] as const
+export type SetupSection = (typeof SETUP_SECTIONS)[number]
+
+/** What may follow /setup: nothing (the full setup) or `--section <name>` from the fixed list. */
+export function isSetupInput(input: string): boolean {
+  if (input === '') return true
+  const m = /^--section ([a-z]+)$/.exec(input)
+  return m !== null && (SETUP_SECTIONS as readonly string[]).includes(m[1]!)
+}
 
 export interface StartRun {
   command: RunnableCommand

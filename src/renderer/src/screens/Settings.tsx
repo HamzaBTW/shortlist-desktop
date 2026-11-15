@@ -24,6 +24,8 @@ interface SettingsProps {
   health: ToolCheck[] | null
   checkingHealth: boolean
   onRecheckHealth: () => void
+  /** Opens the first-run wizard again. */
+  onRunSetup: () => void
 }
 
 function SlotField({ source, value, onCommit }: { source: Source; value: number; onCommit: (n: number) => void }) {
@@ -54,7 +56,7 @@ function SlotField({ source, value, onCommit }: { source: Source; value: number;
   )
 }
 
-export function Settings({ settings, onChange, workspace, onWorkspace, engine, onRecheckEngine, health, checkingHealth, onRecheckHealth }: SettingsProps) {
+export function Settings({ settings, onChange, workspace, onWorkspace, engine, onRecheckEngine, health, checkingHealth, onRecheckHealth, onRunSetup }: SettingsProps) {
   const { t } = useTranslation()
   const [info, setInfo] = useState<AppInfo | null>(null)
 
@@ -73,6 +75,20 @@ export function Settings({ settings, onChange, workspace, onWorkspace, engine, o
       <EnginePanel status={engine} onRecheck={onRecheckEngine} />
 
       <HealthPanel checks={health} checking={checkingHealth} onRecheck={onRecheckHealth} />
+
+      <section className="sl-tile panel" aria-labelledby="setup-again-title">
+        <div className="setting-row">
+          <span className="sl-col">
+            <span id="setup-again-title" className="setting-row__label">
+              {t('settings.runSetup')}
+            </span>
+            <span className="sl-t-sm">{t('settings.runSetupNote')}</span>
+          </span>
+          <button type="button" className="sl-btn" onClick={onRunSetup}>
+            {t('settings.runSetupButton')}
+          </button>
+        </div>
+      </section>
 
       <section className="sl-tile panel" aria-labelledby="perm-title">
         <h2 id="perm-title" className="sl-t-title">

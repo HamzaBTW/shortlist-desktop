@@ -64,6 +64,11 @@
   animation: sl-rise var(--dur-panel) var(--ease-out) both;
 }
 
+/* The same rise for panels that open inside a screen and for the reply box. */
+.rise {
+  animation: sl-rise var(--dur-panel) var(--ease-out) both;
+}
+
 /* 05 Going back: a screen cross-fades in over 200 ms. */
 @keyframes sl-fade-in {
   from {

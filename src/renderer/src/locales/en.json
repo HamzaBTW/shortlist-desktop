@@ -69,7 +69,10 @@
     "askWebOn": "On: every web page and web search shows an Allow once / Deny card.",
     "slots": "Job sources",
     "slotsHint": "How many postings each source may add when you press Find new jobs. Whole numbers, 0 or more; 0 skips that source.",
-    "slotsInvalid": "Use a whole number, 0 or more."
+    "slotsInvalid": "Use a whole number, 0 or more.",
+    "runSetup": "Run setup again",
+    "runSetupNote": "Opens the first-run steps again: AI engine, computer check, folder and profile. Nothing is reset.",
+    "runSetupButton": "Run setup"
   },
   "placeholder": {
     "body": "This screen comes later."
@@ -213,9 +216,7 @@
     },
     "prepare": "Prepare application",
     "notNow": "Not now",
-    "notNowNote": "Kept as is. You can still reply below to prepare it later.",
-    "replyLabel": "Reply",
-    "send": "Send"
+    "notNowNote": "Kept as is. You can still reply below to prepare it later."
   },
   "status": {
     "ranked": "Ranked",
@@ -402,6 +403,131 @@
       "noBbox": "Found, but this version can't measure page layout, so the layout check will be skipped.",
       "brokenBbox": "Version {{version}} has a bug that stops the layout check. Update to 26.05 or newer.",
       "noPdftoppm": "Found, but pdftoppm is missing, so CV page previews will be skipped."
+    }
+  },
+  "reply": {
+    "label": "Your reply",
+    "placeholder": "Write your answer in your own words.",
+    "send": "Send reply",
+    "truth": "Only true details: the AI won't add anything you don't tell it.",
+    "busy": "Another job is running. You can send this once it finishes.",
+    "asks": "The AI asks"
+  },
+  "wizard": {
+    "progress": "Step {{step}} of {{total}}",
+    "back": "Back",
+    "continue": "Continue",
+    "later": "Do this later",
+    "skip": "I'll finish setting up later",
+    "welcome": {
+      "title": "Your job search, on your computer.",
+      "lead": "{{name}} is a calm front-end for your ai-job-search folder. Your profile, tracker and applications stay in that folder. The AI engine you connect reads only what a task needs.",
+      "steps": "Setup takes about five minutes: connect the AI, check this computer, choose your folder and build your profile.",
+      "start": "Get started",
+      "data": "How your data is handled",
+      "dataItems": {
+        "noAccount": "No account, no usage data, no network port. The app's screens can't reach the internet.",
+        "engine": "The AI engine you connect sends what a task needs, such as a job posting and the parts of your profile it is matching.",
+        "files": "{{name}} never writes your job-search files itself (apart from copying the framework if you set up a new folder). The job-search commands do, and anything unusual asks you first.",
+        "updates": "{{name}} checks once a day whether a newer version exists. You can turn that off in Settings."
+      }
+    },
+    "connect": {
+      "title": "Connect the AI",
+      "lead": "{{name}} runs your job-search commands on an AI engine. You can switch later in Settings without losing anything.",
+      "need": "Connect an engine to continue"
+    },
+    "check": {
+      "title": "Check this computer",
+      "lead": "The job-search commands use a few free tools. Nothing is installed here; if something is missing you can still continue and fix it later in Settings.",
+      "fixLater_one": "{{count}} thing to fix later",
+      "fixLater_other": "{{count}} things to fix later"
+    },
+    "folder": {
+      "title": "Your job-search folder",
+      "lead": "Everything lives in one folder on this computer: your profile, tracker, CVs and letters. Nothing is uploaded to GitHub or the cloud.",
+      "existing": "Use my existing folder",
+      "existingNote": "You already have a copy of ai-job-search on this computer.",
+      "chooseFolder": "Choose folder",
+      "new": "Set up a new folder",
+      "newNote": "A fresh copy of the job-search framework in an empty folder you pick.",
+      "gitMissing": "This needs Git, which isn't on this computer yet.",
+      "gitOld": "This needs a newer Git (2.50.1 or newer).",
+      "looksRight": "This looks like ai-job-search: the job-search commands and CLAUDE.md are here.",
+      "notRight": "This folder doesn't look like ai-job-search. Choose the folder that has CLAUDE.md and the .claude folder in it.",
+      "readOnly": "{{name}} only reads this folder. The job-search commands write to it when you run them.",
+      "where": "Where are you looking for work?",
+      "region": {
+        "uae": "In the UAE",
+        "uaeNote": "The UAE edition: UAE job sites, salary packages with allowances, visa and notice-period guidance.",
+        "elsewhere": "Somewhere else",
+        "elsewhereNote": "The original ai-job-search, which works for any country."
+      },
+      "folderLabel": "Folder",
+      "chooseEmpty": "Choose an empty folder",
+      "notEmpty": "This folder isn't empty. Pick an empty folder, so nothing of yours is overwritten.",
+      "needBoth": "Choose where you're looking and an empty folder to continue.",
+      "setUp": "Set up folder",
+      "step": {
+        "empty": "Checked the folder is still empty",
+        "copy": "Copying the job-search framework (the version tested with this {{name}})",
+        "push": "Turning off uploads to GitHub for this folder"
+      },
+      "ready": "Your folder is ready. Uploads to GitHub are turned off for it.",
+      "problem": {
+        "noFolder": "Choose an empty folder first.",
+        "notEmpty": "The folder isn't empty any more. Pick an empty folder.",
+        "noGit": "Git isn't on this computer, so the copy can't start.",
+        "oldGit": "Your Git is too old for a safe copy. Update it to 2.50.1 or newer, then try again.",
+        "cloneFailed": "The copy stopped. Check your internet connection and try again.",
+        "pinFailed": "The copy finished, but it couldn't be set to the tested version.",
+        "checkFailed": "The copy finished, but the folder doesn't look like ai-job-search.",
+        "busy": "A copy is already running."
+      },
+      "partial": "Some files were copied before it stopped, so the folder isn't empty now. Nothing was deleted: empty it yourself, or choose another empty folder.",
+      "chooseOther": "Choose another empty folder",
+      "tryAgain": "Try again",
+      "need": "Choose a folder to continue"
+    },
+    "profile": {
+      "title": "Build your profile",
+      "lead": "The AI writes your profile from what you give it: experience, skills, goals and the jobs you want. It never invents experience. You can change any part later.",
+      "already": "Your folder already has a profile",
+      "alreadyNote": "Nothing to do here. You can update it any time.",
+      "howTitle": "The AI will ask how you'd like to start",
+      "how": {
+        "import": "Import my documents:",
+        "importNote": "your CV, LinkedIn export, certificates and old applications. Quickest.",
+        "paste": "Paste my CV:",
+        "pasteNote": "paste the text, then answer a few follow-up questions.",
+        "interview": "Interview me:",
+        "interviewNote": "answer questions section by section. Good if you're starting from scratch."
+      },
+      "start": "Start building my profile",
+      "needEngine": "Connect the AI first (step 2).",
+      "running": "Building your profile",
+      "waiting": "Waiting for you",
+      "leaveNote": "You can leave this step; the conversation stays in the job list and waits for your answers.",
+      "jobTitle": "Build your profile"
+    },
+    "done": {
+      "title": "You're set up.",
+      "lead": "Next, find jobs that fit your profile, or add one you've already seen.",
+      "summary": "Setup summary",
+      "engineReady": "AI engine: your Claude Code",
+      "engineNot": "AI engine: not connected yet",
+      "computerOk": "This computer: everything ready",
+      "computerFix_one": "This computer: {{count}} thing to fix later",
+      "computerFix_other": "This computer: {{count}} things to fix later",
+      "openSettings": "Open Settings",
+      "folder": "Folder: {{path}}",
+      "noFolder": "Folder: not chosen yet",
+      "profileOk": "Profile: built",
+      "profileNot": "Profile: not built yet",
+      "find": "Find your first jobs",
+      "add": "Add a job I've seen",
+      "home": "Go to my pipeline",
+      "again": "You can run this setup again any time from Settings."
     }
   }
 }

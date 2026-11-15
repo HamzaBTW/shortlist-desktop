@@ -1,7 +1,10 @@
 import { app, BrowserWindow, dialog, shell } from 'electron'
 import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
+import type { NewFolderResult } from '../shared/framework'
+import { isRegion } from '../shared/framework'
 import type { WorkspaceStatus } from '../shared/ipc'
+import { isEmptyFolder, setupFolder } from './new-folder'
 import { checkWorkspace } from './workspace-check'
 
 // Remembers which ai-job-search folder the person chose. Stored in the app's own
@@ -44,6 +47,41 @@ export async function chooseWorkspace(win: BrowserWindow | null): Promise<Worksp
   const status = checkWorkspace(path.resolve(picked))
   if (status.ok) savePath(status.path)
   return status
+}
+
+/** The empty folder picked for "Set up a new folder", kept here so the screens never pass a path. */
+let pendingFolder: string | null = null
+let settingUp = false
+
+export async function chooseEmptyFolder(win: BrowserWindow | null): Promise<{ path: string; empty: boolean } | null> {
+  const options: Electron.OpenDialogOptions = {
+    title: 'Choose an empty folder for your job search',
+    properties: ['openDirectory', 'createDirectory', 'promptToCreate', 'dontAddToRecent']
+  }
+  const result = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
+  const picked = result.filePaths[0]
+  if (result.canceled || !picked) return null
+  const folder = path.resolve(picked)
+  const empty = isEmptyFolder(folder)
+  pendingFolder = empty ? folder : null
+  return { path: folder, empty }
+}
+
+export async function setupNewFolder(region: unknown): Promise<NewFolderResult> {
+  if (!isRegion(region) || !pendingFolder) return { ok: false, problem: 'noFolder', partial: false }
+  if (settingUp) return { ok: false, problem: 'busy', partial: false }
+  settingUp = true
+  try {
+    const result = await setupFolder(pendingFolder, region)
+    if (!result.ok) return result
+    const status = checkWorkspace(result.path)
+    if (!status.ok) return { ok: false, problem: 'checkFailed', partial: true }
+    savePath(status.path)
+    pendingFolder = null
+    return result
+  } finally {
+    settingUp = false
+  }
 }
 
 export async function openWorkspace(): Promise<void> {

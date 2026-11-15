@@ -10,7 +10,8 @@ test('keeps valid values', () => {
     askWeb: true,
     autoApprove: false,
     fitView: 'short',
-    slots: DEFAULT_SETTINGS.slots
+    slots: DEFAULT_SETTINGS.slots,
+    setupDone: false
   })
 })
 
@@ -35,8 +36,13 @@ test('drops unknown keys and bad values', () => {
 })
 
 test('a patch only changes what it names', () => {
-  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short' as const, slots: DEFAULT_SETTINGS.slots }
-  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SETTINGS.slots })
+  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short' as const, slots: DEFAULT_SETTINGS.slots, setupDone: false }
+  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SETTINGS.slots, setupDone: false })
+})
+
+test('setupDone is kept only as a boolean', () => {
+  assert.equal(cleanSettings({ setupDone: true }).setupDone, true)
+  assert.equal(cleanSettings({ setupDone: 'yes' }).setupDone, false)
 })
 
 import { cleanSlots, DEFAULT_SLOTS, isScrapeInput, slotsArg, sourceOf } from '../src/shared/slots.ts'

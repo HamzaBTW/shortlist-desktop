@@ -2,6 +2,7 @@
 // Everything the screens can ask for is listed here; nothing else is exposed.
 
 import type { DocFile } from './documents'
+import type { NewFolderResult, Region } from './framework'
 import type { ToolCheck } from './health'
 import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
 import type { Pick, SearchData } from './search'
@@ -34,9 +35,11 @@ export interface Settings {
   fitView: FitView
   /** How many postings each source may add per "Find new jobs" run. */
   slots: Slots
+  /** The first-run wizard was finished (or skipped because a folder was already set up). */
+  setupDone: boolean
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SLOTS }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SLOTS, setupDone: false }
 
 export interface AppInfo {
   name: string
@@ -63,6 +66,8 @@ export const Channels = {
   workspaceGet: 'workspace:get',
   workspaceChoose: 'workspace:choose',
   workspaceOpen: 'workspace:open',
+  folderChooseEmpty: 'folder:chooseEmpty',
+  folderSetup: 'folder:setup',
   engineDetect: 'engine:detect',
   engineSignIn: 'engine:signIn',
   healthCheck: 'health:check',
@@ -101,6 +106,13 @@ export interface ShortlistApi {
   chooseWorkspace(): Promise<WorkspaceStatus | null>
   /** Shows the saved folder in Explorer / Finder. */
   openWorkspace(): Promise<void>
+  /**
+   * "Set up a new folder", part 1: the system folder dialog. Remembers the folder in the main
+   * process (the screens never pass a path). null if cancelled; empty false if it holds anything.
+   */
+  chooseEmptyFolder(): Promise<{ path: string; empty: boolean } | null>
+  /** Part 2: copies the framework for that region into the chosen folder, then uses it. */
+  setupNewFolder(region: Region): Promise<NewFolderResult>
   /** Is "Your Claude Code" installed, recent enough and signed in? */
   detectEngine(): Promise<EngineStatus>
   /** Opens Claude Code's own sign-in in a terminal window. */
@@ -150,5 +162,6 @@ export function cleanSettings(input: unknown, base: Settings = DEFAULT_SETTINGS)
   if (typeof raw.autoApprove === 'boolean') out.autoApprove = raw.autoApprove
   if (typeof raw.fitView === 'string' && (FIT_VIEWS as readonly string[]).includes(raw.fitView)) out.fitView = raw.fitView as FitView
   if ('slots' in raw) out.slots = cleanSlots(raw.slots, base.slots)
+  if (typeof raw.setupDone === 'boolean') out.setupDone = raw.setupDone
   return out
 }

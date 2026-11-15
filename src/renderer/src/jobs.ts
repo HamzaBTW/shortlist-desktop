@@ -35,7 +35,7 @@ export interface Job {
    * 'apply': a board card. 'outcome': a status update. 'search': Find new jobs
    * (/scrape, then /rank), shown on the Search & rank screen.
    */
-  kind: 'apply' | 'outcome' | 'search'
+  kind: 'apply' | 'outcome' | 'search' | 'setup'
   /** For a search: which of its two commands is (or was last) running. */
   stage?: 'scrape' | 'rank' | 'close'
   /** For an application started from a ranked job: that job's key. */

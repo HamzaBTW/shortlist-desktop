@@ -1,5 +1,7 @@
-import type { WebContents } from 'electron'
-import { NO_INPUT_COMMANDS, RUNNABLE_COMMANDS, type RunnableCommand, type ContinueRun, type RunEvent, type StartRun } from '../shared/engine'
+import { app, type WebContents } from 'electron'
+import { writeFileSync } from 'node:fs'
+import path from 'node:path'
+import { isSetupInput, NO_INPUT_COMMANDS, RUNNABLE_COMMANDS, type RunnableCommand, type ContinueRun, type RunEvent, type StartRun } from '../shared/engine'
 import { Channels, type RunStartResult } from '../shared/ipc'
 import { ClaudeCodeRun } from './engine/claude-code'
 import { newDocs, snapshotDocs } from './doc-files'
@@ -9,6 +11,18 @@ import { loadSettings } from './settings'
 import { currentWorkspace } from './workspace'
 
 // One run at a time: the commands share LaTeX build files in the workspace.
+
+/**
+ * Settings passed to every run on top of the folder's own: hooks off. Headless Claude Code runs a
+ * folder's hooks without asking (checked 2026-11-14); the framework has none, so nothing breaks,
+ * and a hook added later by an update or someone else's folder never runs from the app.
+ * Kept in the app's data folder, rewritten before each run.
+ */
+function runSettingsFile(): string {
+  const file = path.join(app.getPath('userData'), 'run-settings.json')
+  writeFileSync(file, JSON.stringify({ disableAllHooks: true }, null, 2))
+  return file
+}
 
 const MAX_INPUT = 60_000
 let current: ClaudeCodeRun | null = null
@@ -51,7 +65,8 @@ function begin(target: WebContents, prompt: string, command: string | undefined,
       acceptEdits: s.autoApprove || !s.askEveryChange,
       allowWeb: s.autoApprove || !s.askWeb,
       autoApprove: s.autoApprove,
-      command
+      command,
+      settingsFile: runSettingsFile()
     },
     emitTo(target, command, drafted)
   )
@@ -69,6 +84,7 @@ export function startRun(target: WebContents, raw: unknown): RunStartResult {
   if (input.length > MAX_INPUT) return { ok: false, reason: 'badInput' }
   if (!input && !NO_INPUT_COMMANDS.includes(req.command as RunnableCommand)) return { ok: false, reason: 'badInput' }
   if (req.command === 'scrape' && !isScrapeInput(input)) return { ok: false, reason: 'badInput' }
+  if (req.command === 'setup' && !isSetupInput(input)) return { ok: false, reason: 'badInput' }
   return begin(target, input ? `/${req.command} ${input}` : `/${req.command}`, req.command)
 }
 
