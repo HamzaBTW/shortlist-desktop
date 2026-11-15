@@ -541,5 +541,65 @@
     "how": "Download it from the release page, then run the installer.",
     "whatsNew": "See what's new",
     "hide": "Hide until the next version"
+  },
+  "profile": {
+    "title": "Profile",
+    "lead": "What the AI knows about you, straight from your folder. To change something, open the file or ask the AI to update that part.",
+    "noFolder": "Choose your job-search folder first.",
+    "needEngine": "Connect the AI in Settings to update your profile with AI. You can still open the files.",
+    "openFolder": "Open folder",
+    "expand": "Add more from my public profiles",
+    "files": "Profile files",
+    "filled": "Filled in",
+    "toFill_one": "{{count}} to fill in",
+    "toFill_other": "{{count}} to fill in",
+    "missing": "This file isn't in your folder.",
+    "writingNote": "How your letters should sound. Open it to read or edit.",
+    "parts": "Parts: {{list}}",
+    "more_one": "and {{count}} more",
+    "more_other": "and {{count}} more",
+    "stillToFill": "Still to fill in: {{list}}",
+    "openFile": "Open file",
+    "openCv": "Open CV template",
+    "openLetter": "Open letter template",
+    "update": "Update with AI",
+    "whichPart": "Which part?",
+    "menuNote": "The AI asks you about it, then updates the file.",
+    "conversations": "Recent profile conversations",
+    "openConversation": "Open",
+    "card": {
+      "settings": "Your settings",
+      "candidate": "Candidate profile",
+      "behavioral": "How you work",
+      "writing": "Writing style",
+      "evaluation": "What makes a good fit",
+      "templates": "CV and letter templates",
+      "interview": "Interview prep",
+      "search": "Job search"
+    },
+    "section": {
+      "identity": "Identity and contact",
+      "education": "Education",
+      "experience": "Experience",
+      "skills": "Skills",
+      "publications": "Publications and awards",
+      "behavioral": "How you work",
+      "goals": "Goals and preferences",
+      "references": "References",
+      "search": "Job search"
+    },
+    "empty": {
+      "label": "Your profile is empty",
+      "title": "Tell the AI about yourself first",
+      "lead": "Every fit score, CV and cover letter is built from your profile. Import your documents, paste your CV or answer questions.",
+      "build": "Build your profile",
+      "nextTitle": "Then: add more from your public profiles",
+      "nextNote": "Once your profile exists, the AI can suggest additions from your documents, LinkedIn, GitHub or portfolio. You approve each one."
+    },
+    "job": {
+      "setup": "Build your profile",
+      "section": "Update profile: {{section}}",
+      "expand": "Add more from public profiles"
+    }
   }
 }

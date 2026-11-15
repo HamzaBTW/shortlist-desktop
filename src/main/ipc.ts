@@ -8,6 +8,8 @@ import { chooseEmptyFolder, chooseWorkspace, currentWorkspace, openWorkspace, se
 import { detect, openSignIn } from './engine/claude-code'
 import { checkComputer, defaultDeps } from './health'
 import { dismissUpdate, updateStatus } from './updates'
+import { readProfile, realInside } from './profile'
+import { isOpenablePath } from '../shared/profile'
 import { answerPermission, answerQuestion, cancelRun, continueRun, startRun } from './runs'
 import { documentsFor } from './doc-files'
 import { openDoc } from './documents'
@@ -73,6 +75,17 @@ export function registerIpc(): void {
   handle(Channels.folderSetup, (_event, region) => setupNewFolder(region))
   handle(Channels.updatesStatus, () => updateStatus())
   handle(Channels.updatesDismiss, (_event, version) => dismissUpdate(version))
+  handle(Channels.profileRead, () => {
+    const ws = workspacePath()
+    return ws ? readProfile(ws) : []
+  })
+  // A separate channel from the PDF one: only the allowlisted files, only inside the folder.
+  handle(Channels.fileOpen, async (_event, rel) => {
+    const ws = workspacePath()
+    if (!ws || !isOpenablePath(rel)) return false
+    const real = realInside(ws, rel)
+    return real ? (await shell.openPath(real)) === '' : false
+  })
 
   handle(Channels.engineDetect, () => detect())
   handle(Channels.engineSignIn, () => openSignIn())

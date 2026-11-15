@@ -85,6 +85,7 @@ export function startRun(target: WebContents, raw: unknown): RunStartResult {
   if (!input && !NO_INPUT_COMMANDS.includes(req.command as RunnableCommand)) return { ok: false, reason: 'badInput' }
   if (req.command === 'scrape' && !isScrapeInput(input)) return { ok: false, reason: 'badInput' }
   if (req.command === 'setup' && !isSetupInput(input)) return { ok: false, reason: 'badInput' }
+  if (req.command === 'expand' && input !== '') return { ok: false, reason: 'badInput' }
   return begin(target, input ? `/${req.command} ${input}` : `/${req.command}`, req.command)
 }
 

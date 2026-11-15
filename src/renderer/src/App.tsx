@@ -20,6 +20,7 @@ import { RowDetail } from './screens/RowDetail'
 import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
 import { Wizard } from './screens/Wizard'
+import { Profile } from './screens/Profile'
 import { slotsArg, topUpSlots, type Freed, type Source, type SourceLabel } from '../../shared/slots'
 import { useTheme } from './useTheme'
 
@@ -37,6 +38,8 @@ export function App() {
   const [wizard, setWizard] = useState<boolean | null>(null)
   const [setupJobId, setSetupJobId] = useState<string | null>(null)
   const [updateNotice, setUpdateNotice] = useState<UpdateStatus | null>(null)
+  /** Bumped when a run ends, so the Profile screen reads its files again. */
+  const [runsEnded, setRunsEnded] = useState(0)
   const [engine, setEngine] = useState<EngineStatus | null>(null)
   const [health, setHealth] = useState<ToolCheck[] | null>(null)
   const [checkingHealth, setCheckingHealth] = useState(false)
@@ -107,6 +110,7 @@ export function App() {
     const off = window.shortlist.onRunEvent((event) => {
       setJobs((all) => all.map((j) => applyEvent(j, event)))
       if (event.type !== 'finished' && event.type !== 'failed') return
+      setRunsEnded((n) => n + 1)
       const closed = closeRuns.current.get(event.runId)
       closeRuns.current.delete(event.runId)
       void reloadSearch().then((data) => {
@@ -249,6 +253,18 @@ export function App() {
     job.title = t('wizard.profile.jobTitle')
     setJobs((all) => [job, ...all])
     setSetupJobId(id)
+    return null
+  }
+
+  /** Profile screen: /setup (all or one section) or /expand, followed as a job. */
+  const runProfile = async (command: 'setup' | 'expand', input: string, title: string): Promise<string | null> => {
+    const r = await window.shortlist.startRun({ command, input })
+    if (!r.ok) return runProblem(r)
+    const id = crypto.randomUUID()
+    const job = newJob(id, input ? `/${command} ${input}` : `/${command}`, r.runId, Date.now(), 'setup')
+    job.title = title
+    setJobs((all) => [job, ...all])
+    setView({ job: id })
     return null
   }
 
@@ -451,7 +467,21 @@ export function App() {
       />
     )
   } else {
-    screen = <Placeholder titleKey={`nav.${view}`} />
+    screen =
+      view === 'profile' ? (
+        <Profile
+          workspace={workspace}
+          ready={ready}
+          busy={running}
+          conversations={jobs.filter((j) => j.kind === 'setup').sort((a, b) => b.createdAt - a.createdAt)}
+          refreshKey={runsEnded}
+          onRun={runProfile}
+          onOpenJob={(id) => setView({ job: id })}
+          onNavigate={setView}
+        />
+      ) : (
+        <Placeholder titleKey={`nav.${view}`} />
+      )
   }
 
   const finishWizard = (then?: 'find' | 'add' | 'settings'): void => {

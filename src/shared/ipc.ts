@@ -4,6 +4,7 @@
 import type { DocFile } from './documents'
 import type { NewFolderResult, Region } from './framework'
 import type { UpdateStatus } from './updates'
+import type { CardSummary } from './profile'
 import type { ToolCheck } from './health'
 import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
 import type { Pick, SearchData } from './search'
@@ -73,6 +74,8 @@ export const Channels = {
   folderSetup: 'folder:setup',
   updatesStatus: 'updates:status',
   updatesDismiss: 'updates:dismiss',
+  profileRead: 'profile:read',
+  fileOpen: 'file:open',
   engineDetect: 'engine:detect',
   engineSignIn: 'engine:signIn',
   healthCheck: 'health:check',
@@ -122,6 +125,10 @@ export interface ShortlistApi {
   updateStatus(): Promise<UpdateStatus>
   /** Closes the notice for that version ("hide until the next version"). */
   dismissUpdate(version: string): Promise<boolean>
+  /** The profile files, summarised (headings and placeholder counts only). Read-only. */
+  readProfile(): Promise<CardSummary[]>
+  /** Opens an allowlisted file (profile files, the exported report, skills reports) in the person's own app. */
+  openFile(rel: string): Promise<boolean>
   /** Is "Your Claude Code" installed, recent enough and signed in? */
   detectEngine(): Promise<EngineStatus>
   /** Opens Claude Code's own sign-in in a terminal window. */
