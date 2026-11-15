@@ -10,7 +10,7 @@
 
 A calm desktop app for the open-source [ai-job-search](https://github.com/ai-job-search-dev/ai-job-search) workflow. It is a front-end only: your profile, tracker and application folders stay in your own copy of ai-job-search, and every button runs that repo's own commands.
 
-**Status:** early. It connects to your folder and to your own signed-in Claude Code, adds jobs and checks your fit, finds and ranks new jobs, shows your tracker as a board, and records status updates. It also checks this computer for the tools the commands use (Settings › This computer) without installing anything. A first-run wizard connects the AI, checks the computer, picks or sets up your folder and starts building your profile. The Profile screen shows each profile file read-only, with "Update with AI" for the parts the setup command can update. Still to come: API-key engine and the Reports screen.
+**Status:** early. It connects to your folder and to your own signed-in Claude Code, adds jobs and checks your fit, finds and ranks new jobs, shows your tracker as a board, and records status updates. It also checks this computer for the tools the commands use (Settings › This computer) without installing anything. A first-run wizard connects the AI, checks the computer, picks or sets up your folder and starts building your profile. The Profile screen shows each profile file read-only, with "Update with AI" for the parts the setup command can update. Reports shows how far applications got, replies by channel and skill gaps, and exports a PDF in the app's own design. Still to come: the API-key engine.
 
 ## Platforms
 - **Windows:** tested. The installer is on the [Releases page](https://github.com/HamzaBTW/shortlist-desktop/releases).

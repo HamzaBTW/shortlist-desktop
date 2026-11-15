@@ -19,9 +19,11 @@ export interface EngineStatus {
 }
 
 /** Commands the screens may start. Anything else is refused by the main process. */
-export const RUNNABLE_COMMANDS = ['apply', 'outcome', 'scrape', 'rank', 'setup', 'expand'] as const
+export const RUNNABLE_COMMANDS = ['apply', 'outcome', 'scrape', 'rank', 'setup', 'expand', 'upskill'] as const
 /** Commands that run with nothing after them. */
-export const NO_INPUT_COMMANDS: readonly RunnableCommand[] = ['scrape', 'rank', 'setup', 'expand']
+export const NO_INPUT_COMMANDS: readonly RunnableCommand[] = ['scrape', 'rank', 'setup', 'expand', 'upskill']
+/** Commands that only ever run with nothing after them (the app's fixed form of each). */
+export const ONLY_NO_INPUT: readonly RunnableCommand[] = ['expand', 'upskill']
 export type RunnableCommand = (typeof RUNNABLE_COMMANDS)[number]
 
 /** The parts of the profile `/setup --section <name>` can update (the framework's own list). */

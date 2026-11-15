@@ -601,5 +601,155 @@
       "section": "Update profile: {{section}}",
       "expand": "Add more from public profiles"
     }
+  },
+  "reports": {
+    "title": "Reports",
+    "noFolder": "Choose your job-search folder first.",
+    "source_one": "From your tracker: {{count}} application since {{date}}.",
+    "source_other": "From your tracker: {{count}} applications since {{date}}.",
+    "sourceNoDate_one": "From your tracker: {{count}} application.",
+    "sourceNoDate_other": "From your tracker: {{count}} applications.",
+    "draftsLeftOut": "Drafts that were never sent are not counted.",
+    "export": "Export my report",
+    "openJob": "See what happened",
+    "jobSkills": "Refresh skill gaps",
+    "trackerError": {
+      "unreadable": "The tracker couldn't be read, so these numbers may be incomplete.",
+      "tooLarge": "The tracker is too large to read in full.",
+      "noHeader": "The tracker has no header row, so it couldn't be read."
+    },
+    "summary": "Summary",
+    "tile": {
+      "sent": "Applications",
+      "sentNote_one": "{{count}} sent",
+      "sentNote_other": "{{count}} sent",
+      "response": "Response rate",
+      "responseNote": "{{heard}} of {{sent}} heard back",
+      "interviews": "Interviews",
+      "interviewsNote_one": "{{count}} led to an offer",
+      "interviewsNote_other": "{{count}} led to an offer",
+      "finished": "Finished",
+      "finishedNote": "{{rejections}} closed with a no or no reply ({{rate}})"
+    },
+    "funnel": "How far applications got",
+    "stage": {
+      "applied": "Applied",
+      "heard": "Heard back",
+      "interviewed": "Interviewed",
+      "offer": "Offer"
+    },
+    "perMonth": "Applications per month",
+    "soFar": "so far",
+    "monthsAria": "Applications per month: {{list}}",
+    "noMonths": "No dates with a month in the tracker yet.",
+    "undated_one": "{{count}} application has no month in its date and isn't shown.",
+    "undated_other": "{{count}} applications have no month in their date and aren't shown.",
+    "byChannel": "By channel",
+    "noChannel": "Not recorded",
+    "col": {
+      "channel": "Channel",
+      "sent": "Sent",
+      "heard": "Heard back",
+      "rate": "Rate"
+    },
+    "smallNumbers": "Small numbers: read these as a hint, not a rule.",
+    "early": "It's early days, so this page shows counts only. Rates and charts appear once {{min}} applications are finished ({{count}} so far), because percentages from a handful of jobs would mislead more than help.",
+    "where": "Where your applications are",
+    "count": {
+      "sent": "Sent",
+      "waiting": "Waiting or in progress",
+      "interviewing": "Reached an interview",
+      "finished": "Finished"
+    },
+    "well": {
+      "sent": "Sent",
+      "heard": "Heard back",
+      "interviews": "Interviews",
+      "offers": "Offers"
+    },
+    "draftedOnly_one": "{{count}} draft is ready but not sent yet.",
+    "draftedOnly_other": "{{count}} drafts are ready but not sent yet.",
+    "empty": {
+      "label": "No applications yet",
+      "title": "Your numbers will show up here",
+      "lead": "Once you send applications, this page counts how far each one got, which channels reply, and which skills postings keep asking for. Everything is worked out on this computer from your tracker."
+    },
+    "skills": {
+      "title": "Skills postings asked for",
+      "refresh": "Refresh skill gaps",
+      "running": "Refreshing your skill gaps. This can take several minutes: it compares your postings with your profile and looks up study resources.",
+      "failed": "The skill gaps couldn't be refreshed.",
+      "from": "From your skills report of {{date}}.",
+      "open": "Open the full skills report",
+      "none": "No skills report yet. Refreshing compares the postings you've tracked and ranked with your profile and lists the skills that keep coming up.",
+      "emptyReport": "The latest skills report has no gap table to show. Open it from your folder's upskill folder.",
+      "needsYou": "▲ It's waiting for your OK."
+    },
+    "saving": "Choose where to save your report.",
+    "saved": "Saved to {{path}}",
+    "openSaved": "Open it",
+    "saveFailed": "The report couldn't be saved. Try another folder.",
+    "exportNote": "Saved as a PDF or a web page, wherever you choose. Made on this computer, no AI.",
+    "needsYou": "▲ It needs your OK."
+  },
+  "export": {
+    "title": "Job search report",
+    "generated": "Made {{date}}",
+    "none": "No applications sent yet.",
+    "emptyLead": "Once you send applications, this report counts how far each one got and which channels reply.",
+    "source_one": "From your tracker: {{count}} application since {{date}}.",
+    "source_other": "From your tracker: {{count}} applications since {{date}}.",
+    "sourceNoDate_one": "From your tracker: {{count}} application.",
+    "sourceNoDate_other": "From your tracker: {{count}} applications.",
+    "draftsLeftOut": "Drafts that were never sent are not counted.",
+    "early": "It's early days, so this report shows counts only. Rates appear once {{min}} applications are finished ({{count}} so far).",
+    "tile": {
+      "sent": "Applications",
+      "sentNote_one": "{{count}} sent",
+      "sentNote_other": "{{count}} sent",
+      "response": "Response rate",
+      "responseNote": "{{heard}} of {{sent}} heard back",
+      "interviews": "Interviews",
+      "interviewsNote_one": "{{count}} led to an offer",
+      "interviewsNote_other": "{{count}} led to an offer",
+      "finished": "Finished",
+      "finishedNote": "{{rejections}} closed with a no or no reply ({{rate}})"
+    },
+    "count": {
+      "sent": "Sent",
+      "waiting": "Waiting or in progress",
+      "interviewing": "Reached an interview",
+      "finished": "Finished"
+    },
+    "funnel": "How far applications got",
+    "stage": {
+      "applied": "Applied",
+      "heard": "Heard back",
+      "interviewed": "Interviewed",
+      "offer": "Offer"
+    },
+    "perMonth": "Applications per month",
+    "soFar": "so far",
+    "monthsAria": "Applications per month: {{list}}",
+    "noMonths": "No dates with a month in the tracker yet.",
+    "undated_one": "{{count}} application has no month in its date and isn't shown.",
+    "undated_other": "{{count}} applications have no month in their date and aren't shown.",
+    "byChannel": "By channel",
+    "noChannel": "Not recorded",
+    "smallNumbers": "Small numbers: read these as a hint, not a rule.",
+    "skills": "Skills postings asked for",
+    "skillsFrom": "From your skills report of {{date}}.",
+    "applications": "Your applications",
+    "col": {
+      "channel": "Channel",
+      "sent": "Sent",
+      "heard": "Heard back",
+      "rate": "Rate",
+      "date": "Date",
+      "company": "Company",
+      "role": "Role",
+      "status": "Status"
+    },
+    "footer": "Made by Shortlist on this computer from your job_search_tracker.csv · {{date}}"
   }
 }

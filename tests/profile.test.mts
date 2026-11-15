@@ -71,7 +71,8 @@ test('cards: each card offers only the /setup sections agreed for its file', () 
 
 test('only allowlisted files can be opened', () => {
   for (const c of PROFILE_CARDS) for (const f of c.files) assert.equal(isOpenablePath(f), true, f)
-  assert.equal(isOpenablePath('reports/application-dashboard.html'), true)
+  // The framework's dashboard is no longer opened by the app (its own export replaces it).
+  assert.equal(isOpenablePath('reports/application-dashboard.html'), false)
   assert.equal(isOpenablePath('upskill/report-2026-11-03.md'), true)
   for (const bad of [
     'job_search_tracker.csv',

@@ -21,6 +21,7 @@ import { Search } from './screens/Search'
 import { Settings } from './screens/Settings'
 import { Wizard } from './screens/Wizard'
 import { Profile } from './screens/Profile'
+import { Reports } from './screens/Reports'
 import { slotsArg, topUpSlots, type Freed, type Source, type SourceLabel } from '../../shared/slots'
 import { useTheme } from './useTheme'
 
@@ -268,6 +269,16 @@ export function App() {
     return null
   }
 
+  /** Reports: "Refresh skill gaps" runs the framework's upskill skill, followed as a job. */
+  const runSkills = async (): Promise<string | null> => {
+    const r = await window.shortlist.startRun({ command: 'upskill', input: '' })
+    if (!r.ok) return runProblem(r)
+    const job = newJob(crypto.randomUUID(), '/upskill', r.runId, Date.now(), 'report')
+    job.title = t('reports.jobSkills')
+    setJobs((all) => [job, ...all])
+    return null
+  }
+
   const recordStatus = async (target: StatusTarget, choice: OutcomeChoice, date: string, note: string): Promise<string | null> => {
     // A job card with no linked tracker row: find its row by company name, so the update changes
     // that row instead of /outcome adding a second one named after the job title.
@@ -468,7 +479,20 @@ export function App() {
     )
   } else {
     screen =
-      view === 'profile' ? (
+      view === 'reports' ? (
+        <Reports
+          workspace={workspace}
+          tracker={tracker}
+          ready={ready}
+          busy={running}
+          refreshKey={runsEnded}
+          skillsJob={jobs.filter((j) => j.kind === 'report' && j.input === '/upskill').sort((a, b) => b.createdAt - a.createdAt)[0] ?? null}
+          onRefreshSkills={runSkills}
+          onOpenJob={(id) => setView({ job: id })}
+          onFindJobs={() => void findJobs()}
+          onNavigate={setView}
+        />
+      ) : view === 'profile' ? (
         <Profile
           workspace={workspace}
           ready={ready}

@@ -9,6 +9,8 @@ import { detect, openSignIn } from './engine/claude-code'
 import { checkComputer, defaultDeps } from './health'
 import { dismissUpdate, updateStatus } from './updates'
 import { readProfile, realInside } from './profile'
+import { readReportExtras } from './reports'
+import { exportReport, openLastReport } from './report-export'
 import { isOpenablePath } from '../shared/profile'
 import { answerPermission, answerQuestion, cancelRun, continueRun, startRun } from './runs'
 import { documentsFor } from './doc-files'
@@ -79,6 +81,12 @@ export function registerIpc(): void {
     const ws = workspacePath()
     return ws ? readProfile(ws) : []
   })
+  handle(Channels.reportsRead, () => {
+    const ws = workspacePath()
+    return ws ? readReportExtras(ws) : { outcomes: {}, skills: null }
+  })
+  handle(Channels.reportsExport, (event, html) => exportReport(BrowserWindow.fromWebContents(event.sender), html))
+  handle(Channels.reportsOpenSaved, () => openLastReport())
   // A separate channel from the PDF one: only the allowlisted files, only inside the folder.
   handle(Channels.fileOpen, async (_event, rel) => {
     const ws = workspacePath()

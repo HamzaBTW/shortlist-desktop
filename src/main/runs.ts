@@ -1,7 +1,7 @@
 import { app, type WebContents } from 'electron'
 import { writeFileSync } from 'node:fs'
 import path from 'node:path'
-import { isSetupInput, NO_INPUT_COMMANDS, RUNNABLE_COMMANDS, type RunnableCommand, type ContinueRun, type RunEvent, type StartRun } from '../shared/engine'
+import { isSetupInput, NO_INPUT_COMMANDS, ONLY_NO_INPUT, RUNNABLE_COMMANDS, type RunnableCommand, type ContinueRun, type RunEvent, type StartRun } from '../shared/engine'
 import { Channels, type RunStartResult } from '../shared/ipc'
 import { ClaudeCodeRun } from './engine/claude-code'
 import { newDocs, snapshotDocs } from './doc-files'
@@ -85,7 +85,8 @@ export function startRun(target: WebContents, raw: unknown): RunStartResult {
   if (!input && !NO_INPUT_COMMANDS.includes(req.command as RunnableCommand)) return { ok: false, reason: 'badInput' }
   if (req.command === 'scrape' && !isScrapeInput(input)) return { ok: false, reason: 'badInput' }
   if (req.command === 'setup' && !isSetupInput(input)) return { ok: false, reason: 'badInput' }
-  if (req.command === 'expand' && input !== '') return { ok: false, reason: 'badInput' }
+  // /upskill <url> would fetch an address from the screens; /expand takes nothing.
+  if (ONLY_NO_INPUT.includes(req.command as RunnableCommand) && input !== '') return { ok: false, reason: 'badInput' }
   return begin(target, input ? `/${req.command} ${input}` : `/${req.command}`, req.command)
 }
 

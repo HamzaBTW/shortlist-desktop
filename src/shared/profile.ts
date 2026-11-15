@@ -101,11 +101,11 @@ export function missingFile(file: string): FileSummary {
   return { file, found: false, placeholders: 0, parts: [], toFill: [] }
 }
 
-const OPENABLE = new Set(PROFILE_CARDS.flatMap((c) => c.files).concat(['reports/application-dashboard.html']))
+const OPENABLE = new Set(PROFILE_CARDS.flatMap((c) => c.files))
 
 /**
  * Files the app may open in the person's own apps (a separate channel from the PDF rule):
- * the profile files, the exported report and skills reports. Exact relative paths only.
+ * the profile files and skills reports. Exact relative paths only.
  */
 export function isOpenablePath(rel: unknown): rel is string {
   if (typeof rel !== 'string' || rel.length > 200) return false

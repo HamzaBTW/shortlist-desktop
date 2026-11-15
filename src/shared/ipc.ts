@@ -5,6 +5,7 @@ import type { DocFile } from './documents'
 import type { NewFolderResult, Region } from './framework'
 import type { UpdateStatus } from './updates'
 import type { CardSummary } from './profile'
+import type { OutcomeStages, SkillReport } from './reports'
 import type { ToolCheck } from './health'
 import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
 import type { Pick, SearchData } from './search'
@@ -76,6 +77,9 @@ export const Channels = {
   updatesDismiss: 'updates:dismiss',
   profileRead: 'profile:read',
   fileOpen: 'file:open',
+  reportsRead: 'reports:read',
+  reportsExport: 'reports:export',
+  reportsOpenSaved: 'reports:openSaved',
   engineDetect: 'engine:detect',
   engineSignIn: 'engine:signIn',
   healthCheck: 'health:check',
@@ -98,6 +102,8 @@ export const Channels = {
   /** Main -> screens: progress of the current run. */
   runEvent: 'run:event'
 } as const
+
+export type ExportResult = { ok: true; path: string } | { ok: false; reason: 'cancelled' | 'badInput' | 'failed' }
 
 export type RunStartResult = { ok: true; runId: string } | { ok: false; reason: 'busy' | 'noWorkspace' | 'badInput' }
 
@@ -127,8 +133,14 @@ export interface ShortlistApi {
   dismissUpdate(version: string): Promise<boolean>
   /** The profile files, summarised (headings and placeholder counts only). Read-only. */
   readProfile(): Promise<CardSummary[]>
-  /** Opens an allowlisted file (profile files, the exported report, skills reports) in the person's own app. */
+  /** Opens an allowlisted file (profile files, skills reports) in the person's own app. */
   openFile(rel: string): Promise<boolean>
+  /** For Reports: interview stages ticked in outcome.md files, and the newest skills report. Read-only. */
+  readReportExtras(): Promise<{ outcomes: Record<string, OutcomeStages>; skills: SkillReport | null }>
+  /** "Export my report": asks where to save, then writes the page as PDF or HTML. Never into the folder. */
+  exportReport(html: string): Promise<ExportResult>
+  /** Opens the report saved last (the main process keeps its path). */
+  openSavedReport(): Promise<boolean>
   /** Is "Your Claude Code" installed, recent enough and signed in? */
   detectEngine(): Promise<EngineStatus>
   /** Opens Claude Code's own sign-in in a terminal window. */
