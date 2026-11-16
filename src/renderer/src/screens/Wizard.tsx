@@ -2,7 +2,7 @@ import type { ReactElement } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from '../../../shared/app-info'
-import type { EngineStatus } from '../../../shared/engine'
+import type { EngineSet, EngineStatus } from '../../../shared/engine'
 import type { NewFolderResult, Region } from '../../../shared/framework'
 import { howToLink, type ToolCheck } from '../../../shared/health'
 import type { AppInfo, WorkspaceStatus } from '../../../shared/ipc'
@@ -22,6 +22,8 @@ type Step = (typeof STEPS)[number]
 
 interface WizardProps {
   engine: EngineStatus | null
+  engines: EngineSet | null
+  onUseEngine: (id: EngineSet['active']) => void
   onRecheckEngine: () => void
   health: ToolCheck[] | null
   checkingHealth: boolean
@@ -57,7 +59,7 @@ function Progress({ step }: { step: number }) {
 }
 
 export function Wizard(props: WizardProps) {
-  const { engine, onRecheckEngine, health, checkingHealth, onRecheckHealth, workspace, onWorkspace, setupJob, busy, onStartSetup, onReply, onFinish } = props
+  const { engine, engines, onUseEngine, onRecheckEngine, health, checkingHealth, onRecheckHealth, workspace, onWorkspace, setupJob, busy, onStartSetup, onReply, onFinish } = props
   const { t } = useTranslation()
   const [index, setIndex] = useState(0)
   const step: Step = STEPS[index]!
@@ -163,7 +165,7 @@ export function Wizard(props: WizardProps) {
           </h1>
           <p className="wizard__lead">{t('wizard.connect.lead', { name: APP_NAME })}</p>
         </div>
-        <EnginePanel status={engine} onRecheck={onRecheckEngine} />
+        <EnginePanel engines={engines} onRecheck={onRecheckEngine} onUse={onUseEngine} />
       </>
     )
   } else if (step === 'check') {

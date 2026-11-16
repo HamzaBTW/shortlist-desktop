@@ -100,7 +100,6 @@
   "engine": {
     "title": "AI engine",
     "recommended": "Recommended",
-    "comingNext": "Coming next",
     "comingSoon": "Coming soon",
     "signIn": "Sign in",
     "checkAgain": "Check again",
@@ -110,7 +109,24 @@
     },
     "key": {
       "name": "Anthropic API key",
-      "privacy": "Stored encrypted on this computer. Tasks are billed to this key."
+      "privacy": "Runs your commands on the Claude Code installed on this computer, billed to your own Anthropic API key instead of a Claude plan. Signing in to Claude Code isn't needed.",
+      "label": "Your API key",
+      "save": "Check and save",
+      "checking": "Checking the key…",
+      "getOne": "Get a key",
+      "how": "The key is checked with Anthropic first (this costs nothing), then stored encrypted on this computer. Shortlist never shows it again.",
+      "saved": "Key ending …{{last4}} is saved",
+      "spent": "Spent since you added this key ({{date}}): about {{amount}}",
+      "remove": "Remove key",
+      "billing": "Billed to your Anthropic account for each command you run. With a key, claude.ai connectors such as Indeed are switched off, so Find new jobs uses the other sources.",
+      "weakStorage": "This computer has no keyring to keep the key encrypted, so Shortlist won't save it. Set up a keyring (for example GNOME Keyring or KWallet), then try again.",
+      "problem": {
+        "format": "That doesn't look like an Anthropic API key. Keys start with sk-ant-.",
+        "invalid": "Anthropic didn't accept this key. Check it was copied in full and is still active.",
+        "offline": "Couldn't reach Anthropic to check the key. Check your internet connection and try again.",
+        "storage": "This computer can't keep the key encrypted, so it wasn't saved.",
+        "failed": "The key couldn't be checked right now. Try again in a moment."
+      }
     },
     "codex": {
       "name": "Codex",
@@ -122,13 +138,16 @@
       "signedOut": "Installed, but not signed in",
       "outdated": "Version {{version}} is too old. {{min}} or newer is needed.",
       "notFound": "Claude Code isn't installed on this computer",
-      "error": "Claude Code didn't answer. Try Check again."
+      "error": "Claude Code didn't answer. Try Check again.",
+      "noKey": "Ready to use once you add a key"
     },
     "help": {
       "signedOut": "Sign in opens Claude Code's own sign-in in a terminal window. When it says you're signed in, come back and press Check again.",
       "notFound": "Install Claude Code from Anthropic's website, sign in once, then press Check again.",
       "outdated": "Update Claude Code (run \"claude update\" in a terminal), then press Check again. Older versions trust compromised security certificates."
-    }
+    },
+    "inUse": "In use",
+    "use": "Use this engine"
   },
   "addJob": {
     "title": "Add a job",
@@ -142,7 +161,8 @@
     "refused": {
       "busy": "Another job is still running. Wait for it to finish, or stop it first.",
       "noWorkspace": "Choose your ai-job-search folder in Settings first.",
-      "badInput": "That can't be sent. Paste a link or the posting text."
+      "badInput": "That can't be sent. Paste a link or the posting text.",
+      "noKey": "No API key is saved. Add one in Settings › AI engine, or switch back to Your Claude Code."
     }
   },
   "job": {

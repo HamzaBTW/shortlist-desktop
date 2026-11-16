@@ -270,6 +270,16 @@ button {
   gap: var(--space-3);
 }
 
+.key-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.key-form .field {
+  font-family: var(--font-mono);
+}
+
 /* Buttons that are cards */
 .job-card {
   width: 100%;

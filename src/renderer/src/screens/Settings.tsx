@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AppInfo, Settings as SettingsData, ThemeChoice, WorkspaceStatus } from '../../../shared/ipc'
-import type { EngineStatus } from '../../../shared/engine'
+import type { EngineSet } from '../../../shared/engine'
 import { EnginePanel } from '../components/EnginePanel'
 import { HealthPanel } from '../components/HealthPanel'
 import type { ToolCheck } from '../../../shared/health'
@@ -20,8 +20,9 @@ interface SettingsProps {
   onChange: (patch: Partial<SettingsData>) => void
   workspace: WorkspaceStatus | null
   onWorkspace: (status: WorkspaceStatus) => void
-  engine: EngineStatus | null
+  engines: EngineSet | null
   onRecheckEngine: () => void
+  onUseEngine: (id: EngineSet['active']) => void
   health: ToolCheck[] | null
   checkingHealth: boolean
   onRecheckHealth: () => void
@@ -58,7 +59,7 @@ function SlotField({ source, value, onCommit }: { source: Source; value: number;
   )
 }
 
-export function Settings({ settings, onChange, workspace, onWorkspace, engine, onRecheckEngine, health, checkingHealth, onRecheckHealth, onRunSetup, update }: SettingsProps) {
+export function Settings({ settings, onChange, workspace, onWorkspace, engines, onRecheckEngine, onUseEngine, health, checkingHealth, onRecheckHealth, onRunSetup, update }: SettingsProps) {
   const { t } = useTranslation()
   const [info, setInfo] = useState<AppInfo | null>(null)
 
@@ -74,7 +75,7 @@ export function Settings({ settings, onChange, workspace, onWorkspace, engine, o
 
       <WorkspacePanel workspace={workspace} onChosen={onWorkspace} />
 
-      <EnginePanel status={engine} onRecheck={onRecheckEngine} />
+      <EnginePanel engines={engines} onRecheck={onRecheckEngine} onUse={onUseEngine} />
 
       <HealthPanel checks={health} checking={checkingHealth} onRecheck={onRecheckHealth} />
 

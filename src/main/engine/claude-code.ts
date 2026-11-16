@@ -3,8 +3,9 @@ import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import readline from 'node:readline'
 import { APP_NAME } from '../../shared/app-info'
-import type { EngineStatus, PermissionAsk, Question, RunEvent } from '../../shared/engine'
-import { childEnv } from './env'
+import type { KeyInfo } from '../../shared/api-key'
+import type { EngineSet, EngineStatus, PermissionAsk, Question, RunEvent } from '../../shared/engine'
+import { apiKeyEnv, childEnv } from './env'
 import { findClaude, parseVersion, versionAtLeast, type ClaudeBinary } from './find'
 import { indeedTool, judge } from './policy'
 
@@ -31,20 +32,36 @@ function run(bin: ClaudeBinary, args: string[], cwd?: string): Promise<string> {
   })
 }
 
-export async function detect(): Promise<EngineStatus> {
+/** Both engines need the Claude Code program: installed and recent enough. */
+async function probeProgram(): Promise<{ bin: ClaudeBinary | null; status: EngineStatus }> {
   const base: EngineStatus = { engine: 'claude-code', state: 'notFound', minVersion: MIN_VERSION }
   const bin = findClaude()
-  if (!bin) return base
-
+  if (!bin) return { bin: null, status: base }
   let version: string | null
   try {
     version = parseVersion(await run(bin, ['--version']))
   } catch {
-    return { ...base, state: 'error' }
+    return { bin, status: { ...base, state: 'error' } }
   }
-  if (!version) return { ...base, state: 'error' }
-  if (!versionAtLeast(version, MIN_VERSION)) return { ...base, state: 'outdated', version }
+  if (!version) return { bin, status: { ...base, state: 'error' } }
+  if (!versionAtLeast(version, MIN_VERSION)) return { bin, status: { ...base, state: 'outdated', version } }
+  return { bin, status: { ...base, state: 'ready', version } }
+}
 
+/**
+ * Both engines at once. "Your Claude Code" also needs the sign-in; "Anthropic API key" needs a
+ * saved key instead (the program runs with the key, signed in or not).
+ */
+export async function detectAll(active: EngineSet['active'], key: KeyInfo): Promise<EngineSet> {
+  const { bin, status } = await probeProgram()
+  const apiKey: EngineStatus = { ...status, engine: 'api-key', key }
+  if (status.state === 'ready' && !key.saved) apiKey.state = 'noKey'
+  const claudeCode = bin && status.state === 'ready' ? await signedIn(bin, status) : status
+  return { active, claudeCode, apiKey }
+}
+
+async function signedIn(bin: ClaudeBinary, base: EngineStatus): Promise<EngineStatus> {
+  const version = base.version
   try {
     // Only the yes/no is kept. The output also names the account; it is dropped here.
     const status = JSON.parse(await run(bin, ['auth', 'status', '--json'])) as { loggedIn?: unknown }
@@ -136,7 +153,8 @@ export class ClaudeCodeRun {
      * acceptEdits: Claude Code's "accept edits" mode (file changes inside the folder go ahead).
      * allowWeb: web pages and searches go ahead without a card.
      */
-    private readonly options: { acceptEdits: boolean; allowWeb: boolean; autoApprove?: boolean; command?: string; settingsFile?: string },
+    /** apiKey: run on the "Anthropic API key" engine with this key (main process only). */
+    private readonly options: { acceptEdits: boolean; allowWeb: boolean; autoApprove?: boolean; command?: string; settingsFile?: string; apiKey?: string },
     private readonly emit: Emit
   ) {}
 
@@ -168,7 +186,8 @@ export class ClaudeCodeRun {
     if (resumeSessionId) args.push('--resume', resumeSessionId)
 
     const c = command(bin, args)
-    const child = spawn(c.file, c.args, { cwd: this.workspace, env: childEnv(), windowsHide: true, stdio: 'pipe' })
+    const env = this.options.apiKey ? apiKeyEnv(this.options.apiKey) : childEnv()
+    const child = spawn(c.file, c.args, { cwd: this.workspace, env, windowsHide: true, stdio: 'pipe' })
     this.child = child
     this.emit({ type: 'started', runId: this.runId })
 
@@ -261,7 +280,9 @@ export class ClaudeCodeRun {
         runId: this.runId,
         sessionId: typeof m['session_id'] === 'string' ? m['session_id'] : this.sessionId,
         result: typeof m['result'] === 'string' ? m['result'] : '',
-        isError: m['is_error'] === true
+        isError: m['is_error'] === true,
+        // What this turn cost, as Claude Code reports it; counted only for the API-key engine.
+        ...(typeof m['total_cost_usd'] === 'number' ? { costUsd: m['total_cost_usd'] } : {})
       })
       // One turn per process; the next turn resumes the same session.
       this.child?.stdin.end()

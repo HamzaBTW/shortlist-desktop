@@ -12,7 +12,8 @@ test('keeps valid values', () => {
     fitView: 'short',
     slots: DEFAULT_SETTINGS.slots,
     setupDone: false,
-    updateCheck: true
+    updateCheck: true,
+    engine: 'claude-code'
   })
 })
 
@@ -37,8 +38,15 @@ test('drops unknown keys and bad values', () => {
 })
 
 test('a patch only changes what it names', () => {
-  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short' as const, slots: DEFAULT_SETTINGS.slots, setupDone: false, updateCheck: true }
-  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SETTINGS.slots, setupDone: false, updateCheck: true })
+  const base = { theme: 'light-relax' as const, guide: false, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short' as const, slots: DEFAULT_SETTINGS.slots, setupDone: false, updateCheck: true, engine: 'claude-code' as const }
+  assert.deepEqual(cleanSettings({ guide: true }, base), { theme: 'light-relax', guide: true, askEveryChange: true, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SETTINGS.slots, setupDone: false, updateCheck: true, engine: 'claude-code' })
+})
+
+test('the engine is one of the two run engines; anything else keeps the current one', () => {
+  assert.equal(DEFAULT_SETTINGS.engine, 'claude-code')
+  assert.equal(cleanSettings({ engine: 'api-key' }).engine, 'api-key')
+  assert.equal(cleanSettings({ engine: 'codex' }).engine, 'claude-code')
+  assert.equal(cleanSettings({ engine: 'bypass' }, { ...DEFAULT_SETTINGS, engine: 'api-key' }).engine, 'api-key')
 })
 
 test('setupDone is kept only as a boolean', () => {

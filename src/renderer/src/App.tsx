@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { EngineStatus } from '../../shared/engine'
+import { activeEngine, type EngineSet } from '../../shared/engine'
 import { needsAttention, type ToolCheck } from '../../shared/health'
 import type { UpdateStatus } from '../../shared/updates'
 import { DEFAULT_SETTINGS, type RunStartResult, type Settings as SettingsData, type WorkspaceStatus } from '../../shared/ipc'
@@ -41,7 +41,9 @@ export function App() {
   const [updateNotice, setUpdateNotice] = useState<UpdateStatus | null>(null)
   /** Bumped when a run ends, so the Profile screen reads its files again. */
   const [runsEnded, setRunsEnded] = useState(0)
-  const [engine, setEngine] = useState<EngineStatus | null>(null)
+  const [engines, setEngines] = useState<EngineSet | null>(null)
+  /** The engine that runs the commands (Settings › AI engine). */
+  const engine = engines ? activeEngine(engines) : null
   const [health, setHealth] = useState<ToolCheck[] | null>(null)
   const [checkingHealth, setCheckingHealth] = useState(false)
   const [jobs, setJobs] = useState<Job[]>([])
@@ -65,9 +67,20 @@ export function App() {
   trackerRef.current = tracker
 
   const recheckEngine = useCallback(() => {
-    setEngine((e) => (e ? { ...e, state: 'checking' } : e))
-    void window.shortlist.detectEngine().then(setEngine)
+    setEngines((e) => (e ? { ...e, claudeCode: { ...e.claudeCode, state: 'checking' }, apiKey: { ...e.apiKey, state: 'checking' } } : e))
+    void window.shortlist.detectEngine().then(setEngines)
   }, [])
+
+  /** "Use this engine": the person's choice only; the app never switches by itself. */
+  const useEngine = useCallback(
+    (id: EngineSet['active']) => {
+      void window.shortlist.setSettings({ engine: id }).then((s) => {
+        setSettings(s)
+        recheckEngine()
+      })
+    },
+    [recheckEngine]
+  )
 
   /** "This computer": at startup and on Check again (not on every focus: it starts several programs). */
   const recheckComputer = useCallback(() => {
@@ -468,8 +481,9 @@ export function App() {
         onChange={update}
         workspace={workspace}
         onWorkspace={setWorkspace}
-        engine={engine}
+        engines={engines}
         onRecheckEngine={recheckEngine}
+        onUseEngine={useEngine}
         health={health}
         checkingHealth={checkingHealth}
         onRecheckHealth={recheckComputer}
@@ -523,7 +537,9 @@ export function App() {
       <div className="app app--wizard">
         <Wizard
           engine={engine}
+          engines={engines}
           onRecheckEngine={recheckEngine}
+          onUseEngine={useEngine}
           health={health}
           checkingHealth={checkingHealth}
           onRecheckHealth={recheckComputer}

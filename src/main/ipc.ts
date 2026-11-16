@@ -5,7 +5,9 @@ import { Channels, type AppInfo, type Settings } from '../shared/ipc'
 import { isAppUrl } from './security'
 import { loadSettings, saveSettings } from './settings'
 import { chooseEmptyFolder, chooseWorkspace, currentWorkspace, openWorkspace, setupNewFolder } from './workspace'
-import { detect, openSignIn } from './engine/claude-code'
+import { detectAll, openSignIn } from './engine/claude-code'
+import { keyInfo, removeKey, saveKey } from './engine/api-key'
+import { ENGINE_ONE_ENABLED } from '../shared/api-key'
 import { checkComputer, defaultDeps } from './health'
 import { dismissUpdate, updateStatus } from './updates'
 import { readProfile, realInside } from './profile'
@@ -95,7 +97,9 @@ export function registerIpc(): void {
     return real ? (await shell.openPath(real)) === '' : false
   })
 
-  handle(Channels.engineDetect, () => detect())
+  handle(Channels.engineDetect, () => detectAll(ENGINE_ONE_ENABLED ? loadSettings().engine : 'api-key', keyInfo()))
+  handle(Channels.apiKeySave, (_event, key) => saveKey(key))
+  handle(Channels.apiKeyRemove, () => removeKey())
   handle(Channels.engineSignIn, () => openSignIn())
   // The folder is passed only so nothing inside it is mistaken for a real program.
   handle(Channels.healthCheck, () => checkComputer(defaultDeps(currentWorkspace()?.path ?? null)))

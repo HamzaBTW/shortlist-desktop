@@ -8,6 +8,8 @@ import { newDocs, snapshotDocs } from './doc-files'
 import { isScrapeInput } from '../shared/slots'
 import { SessionCommands } from './session-commands'
 import { loadSettings } from './settings'
+import { readKey, recordSpend } from './engine/api-key'
+import { ENGINE_ONE_ENABLED } from '../shared/api-key'
 import { currentWorkspace } from './workspace'
 
 // One run at a time: the commands share LaTeX build files in the workspace.
@@ -28,8 +30,10 @@ const MAX_INPUT = 60_000
 let current: ClaudeCodeRun | null = null
 const sessions = new SessionCommands()
 
-function emitTo(target: WebContents, command: string | undefined, drafted: () => string[]): (event: RunEvent) => void {
+function emitTo(target: WebContents, command: string | undefined, drafted: () => string[], onKey: boolean): (event: RunEvent) => void {
   return (event) => {
+    // "Spent since you added this key": each finished turn's reported cost.
+    if (onKey && event.type === 'finished') recordSpend(event.costUsd)
     if (event.type === 'session' && command) sessions.remember(event.sessionId, command)
     // The PDFs this turn wrote, sent just before the turn ends so the job can list them.
     if ((event.type === 'finished' || event.type === 'failed') && !target.isDestroyed()) {
@@ -45,6 +49,10 @@ function begin(target: WebContents, prompt: string, command: string | undefined,
   const ws = currentWorkspace()
   if (!ws?.ok) return { ok: false, reason: 'noWorkspace' }
   const s = loadSettings()
+  // The API-key engine: decrypted here, right before the run, and handed only to the process.
+  const onKey = !ENGINE_ONE_ENABLED || s.engine === 'api-key'
+  const apiKey = onKey ? readKey() : null
+  if (onKey && !apiKey) return { ok: false, reason: 'noKey' }
   let before = new Map<string, number>()
   try {
     before = snapshotDocs(ws.path)
@@ -66,9 +74,10 @@ function begin(target: WebContents, prompt: string, command: string | undefined,
       allowWeb: s.autoApprove || !s.askWeb,
       autoApprove: s.autoApprove,
       command,
-      settingsFile: runSettingsFile()
+      settingsFile: runSettingsFile(),
+      ...(apiKey ? { apiKey } : {})
     },
-    emitTo(target, command, drafted)
+    emitTo(target, command, drafted, onKey)
   )
   current = run
   run.start(prompt, resume)

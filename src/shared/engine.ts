@@ -1,5 +1,6 @@
 // What the screens know about AI engines and runs. Engine-neutral on purpose:
 // the screens never talk to a specific CLI (design system: Engine interface).
+import type { KeyInfo } from './api-key'
 
 export type EngineId = 'claude-code' | 'api-key' | 'codex'
 
@@ -10,12 +11,30 @@ export type EngineState =
   | 'signedOut'
   | 'outdated'
   | 'error'
+  /** API-key engine: Claude Code is ready, but no key is saved yet. */
+  | 'noKey'
 
 export interface EngineStatus {
   engine: EngineId
   state: EngineState
   version?: string
   minVersion?: string
+  /** API-key engine only: whether a key is saved (never the key itself). */
+  key?: KeyInfo
+}
+
+/** Both engines, and which one runs the commands (Settings). */
+export interface EngineSet {
+  active: Exclude<EngineId, 'codex'>
+  claudeCode: EngineStatus
+  apiKey: EngineStatus
+}
+
+export const RUN_ENGINES = ['claude-code', 'api-key'] as const
+
+/** The engine that runs the commands. */
+export function activeEngine(set: EngineSet): EngineStatus {
+  return set.active === 'api-key' ? set.apiKey : set.claudeCode
 }
 
 /** Commands the screens may start. Anything else is refused by the main process. */
@@ -84,6 +103,6 @@ export type RunEvent =
   | { type: 'question'; runId: string; ask: QuestionAsk }
   | { type: 'permissionClosed'; runId: string; requestId: string }
   | { type: 'denied'; runId: string; detail: string; reason: string }
-  | { type: 'finished'; runId: string; sessionId: string | null; result: string; isError: boolean }
+  | { type: 'finished'; runId: string; sessionId: string | null; result: string; isError: boolean; costUsd?: number }
   | { type: 'documents'; runId: string; files: string[] }
   | { type: 'failed'; runId: string; message: string }

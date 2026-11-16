@@ -7,7 +7,8 @@ import type { UpdateStatus } from './updates'
 import type { CardSummary } from './profile'
 import type { OutcomeStages, SkillReport } from './reports'
 import type { ToolCheck } from './health'
-import type { ContinueRun, EngineStatus, RunEvent, StartRun } from './engine'
+import type { KeyInfo, SaveKeyResult } from './api-key'
+import { RUN_ENGINES, type ContinueRun, type EngineSet, type RunEvent, type StartRun } from './engine.ts'
 import type { Pick, SearchData } from './search'
 import { cleanSlots, DEFAULT_SLOTS, type Slots } from './slots.ts'
 import type { TrackerData } from './tracker'
@@ -42,9 +43,11 @@ export interface Settings {
   setupDone: boolean
   /** Check GitHub's release list at most once a day and show a notice for a newer version. */
   updateCheck: boolean
+  /** The engine that runs the commands. Chosen by the person; never switched automatically. */
+  engine: (typeof RUN_ENGINES)[number]
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SLOTS, setupDone: false, updateCheck: true }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', guide: true, askEveryChange: false, askWeb: false, autoApprove: false, fitView: 'short', slots: DEFAULT_SLOTS, setupDone: false, updateCheck: true, engine: 'claude-code' }
 
 export interface AppInfo {
   name: string
@@ -82,6 +85,8 @@ export const Channels = {
   reportsOpenSaved: 'reports:openSaved',
   engineDetect: 'engine:detect',
   engineSignIn: 'engine:signIn',
+  apiKeySave: 'apiKey:save',
+  apiKeyRemove: 'apiKey:remove',
   healthCheck: 'health:check',
   runStart: 'run:start',
   runContinue: 'run:continue',
@@ -105,7 +110,7 @@ export const Channels = {
 
 export type ExportResult = { ok: true; path: string } | { ok: false; reason: 'cancelled' | 'badInput' | 'failed' }
 
-export type RunStartResult = { ok: true; runId: string } | { ok: false; reason: 'busy' | 'noWorkspace' | 'badInput' }
+export type RunStartResult = { ok: true; runId: string } | { ok: false; reason: 'busy' | 'noWorkspace' | 'badInput' | 'noKey' }
 
 export interface ShortlistApi {
   appInfo(): Promise<AppInfo>
@@ -141,8 +146,15 @@ export interface ShortlistApi {
   exportReport(html: string): Promise<ExportResult>
   /** Opens the report saved last (the main process keeps its path). */
   openSavedReport(): Promise<boolean>
-  /** Is "Your Claude Code" installed, recent enough and signed in? */
-  detectEngine(): Promise<EngineStatus>
+  /** Both engines: is Claude Code installed, recent enough and signed in; is an API key saved? */
+  detectEngine(): Promise<EngineSet>
+  /**
+   * Checks an Anthropic API key (free model-list request) and saves it encrypted. The key goes
+   * one way only: it is never sent back to the screens, only its last 4 characters.
+   */
+  saveApiKey(key: string): Promise<SaveKeyResult>
+  /** Deletes the saved key (and its spending total). */
+  removeApiKey(): Promise<KeyInfo>
   /** Opens Claude Code's own sign-in in a terminal window. */
   signInEngine(): Promise<boolean>
   /** Checks the free tools the commands use (Python, Bun, Git, LaTeX, pypdf, Poppler). Never installs. */
@@ -192,5 +204,6 @@ export function cleanSettings(input: unknown, base: Settings = DEFAULT_SETTINGS)
   if ('slots' in raw) out.slots = cleanSlots(raw.slots, base.slots)
   if (typeof raw.setupDone === 'boolean') out.setupDone = raw.setupDone
   if (typeof raw.updateCheck === 'boolean') out.updateCheck = raw.updateCheck
+  if (typeof raw.engine === 'string' && (RUN_ENGINES as readonly string[]).includes(raw.engine)) out.engine = raw.engine as Settings['engine']
   return out
 }
